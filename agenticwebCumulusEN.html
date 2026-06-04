@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script src="assets/demo-base.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cumulus — Personal Banking & Mortgages</title>
     <link rel="icon" href="assets/cumulus-icon.png" type="image/x-icon">
@@ -225,11 +226,11 @@
             const GUIDE_PICKER_ITEMS = RESOURCES.filter(r => ['borrow_calc', 'checklist', 'rates'].includes(r.id));
 
             const DEMO_USER_LINES = {
-                1: ["We're first-time buyers in Austin — where should we start?", 2],
-                4: ['Can you open the affordability calculator for our situation?', 5],
-                6: ['What documents should we gather before we apply?', 7],
-                8: ['Can you show me how interest rates work for our conventional loan?', 9],
-                10: ['I need to review all of this with Emily before we talk to a loan officer.', 11],
+                1: ["Hi — we're first-time buyers in Austin and honestly not sure where to start. Any guidance?", 2],
+                4: ["Ah yes — it'd be great to see the affordability calculator for our situation.", 5],
+                6: ["What should we start gathering before we apply? A checklist would really help.", 7],
+                8: ["Could you walk us through how rates would look on a conventional loan?", 9],
+                10: ["This is a lot to take in — Emily and I want to review everything before we talk to a loan officer.", 11],
             };
 
             const skipInputTypingRef = useRef(false);

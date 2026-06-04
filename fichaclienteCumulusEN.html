@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script src="assets/demo-base.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>360 Profile — Cumulus Data Cloud</title>
-    <!-- Favicon -->
     <link rel="icon" href="assets/cumulus-icon.png" type="image/x-icon">
     
     <!-- Tailwind CSS -->
@@ -56,24 +56,18 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        /** Inline SVG — avoids broken relative path when page is embedded or served from varying base URLs */
+        const PREMIER_CARD_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0B3D5C"/><stop offset="100%" stop-color="#00A3A1"/></linearGradient></defs><rect width="320" height="200" rx="12" fill="url(#g)"/><text x="24" y="48" fill="#fff" font-family="Montserrat,sans-serif" font-size="14" font-weight="600">Cumulus Premier</text><text x="24" y="120" fill="#fff" font-family="Montserrat,sans-serif" font-size="20" font-weight="700" letter-spacing="2">MARCUS THOMPSON</text><text x="24" y="148" fill="rgba(255,255,255,0.9)" font-family="Montserrat,sans-serif" font-size="11">Member since 2019 - Mortgage pre-approved</text><circle cx="280" cy="40" r="18" fill="rgba(255,255,255,0.2)"/><text x="280" y="45" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">C</text></svg>';
+        const PREMIER_CARD_SRC = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(PREMIER_CARD_SVG);
+
         function CumulusPremierCard() {
             return (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" role="img" aria-label="Cumulus Premier Gold Card"
-                    className="w-full max-w-[200px] h-auto rounded-lg shadow-lg border border-white/20 mb-2 mx-auto block">
-                    <defs>
-                        <linearGradient id="cumulusPremierGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#0B3D5C" />
-                            <stop offset="100%" stopColor="#00A3A1" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="320" height="200" rx="12" fill="url(#cumulusPremierGrad)" />
-                    <text x="24" y="48" fill="#ffffff" fontFamily="Montserrat, system-ui, sans-serif" fontSize="14" fontWeight="600">Cumulus Premier</text>
-                    <text x="24" y="120" fill="#ffffff" fontFamily="Montserrat, system-ui, sans-serif" fontSize="20" fontWeight="700" letterSpacing="2">MARCUS THOMPSON</text>
-                    <text x="24" y="148" fill="rgba(255,255,255,0.9)" fontFamily="Montserrat, system-ui, sans-serif" fontSize="11">Member since 2019 · Mortgage pre-approved</text>
-                    <circle cx="280" cy="40" r="18" fill="rgba(255,255,255,0.2)" />
-                    <text x="280" y="45" textAnchor="middle" fill="#ffffff" fontFamily="Montserrat, system-ui, sans-serif" fontSize="12" fontWeight="700">C</text>
-                </svg>
+                <img
+                    src={PREMIER_CARD_SRC}
+                    alt="Cumulus Premier Gold Card"
+                    width="200"
+                    height="125"
+                    className="w-full max-w-[200px] h-auto rounded-lg shadow-lg border border-white/20 mb-2 mx-auto block"
+                />
             );
         }
 
