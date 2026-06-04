@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cumulus Agentforce — Omnichannel Demo Portal</title>
+  <link rel="icon" href="assets/cumulus-icon.png" type="image/png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: Montserrat, system-ui, sans-serif; }
+    .channel-btn {
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+    .channel-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(11, 61, 92, 0.2);
+      border-color: #00A3A1;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-[#0B3D5C] to-[#072a3f] text-white">
+  <header class="border-b border-white/10">
+    <div class="max-w-4xl mx-auto px-6 py-6 flex items-center gap-4">
+      <img src="assets/cumulus-logo.png" alt="Cumulus" class="h-8 max-w-[130px] object-contain bg-white rounded px-2 py-1">
+      <div>
+        <h1 class="text-xl font-bold tracking-tight">Cumulus Agentforce Demos</h1>
+        <p class="text-teal-200/80 text-sm">Omnichannel mortgage journey · standalone showcase</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 py-10">
+    <p class="text-slate-200 text-sm mb-8 leading-relaxed">
+      Interactive HTML demos for <strong>Marcus & Emily Thompson</strong> · case <code class="text-[#7ee8e0] bg-white/10 px-1.5 rounded">APP-2847</code>.
+      Flow: <strong>Email</strong> (loan programs) → <strong>Web</strong> (Mortgage Center + chat) → <strong>WhatsApp</strong> (recap + human specialist) → <strong>Data Cloud</strong> (360 profile).
+    </p>
+
+    <section class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-2xl mb-10">
+      <img
+        src="assets/cumulus-homepage-reference.png"
+        alt="Cumulus Mortgage Center — adaptive web demo"
+        class="w-full h-auto max-h-[320px] object-cover object-top"
+      />
+      <div class="p-6 sm:p-8">
+        <h2 class="text-lg font-bold text-[#7ee8e0] mb-1">Path to Homeownership</h2>
+        <p class="text-slate-300 text-sm mb-6">First-time buyers in Austin · Conventional 30-year fixed · Agentforce across channels</p>
+
+        <nav class="grid grid-cols-2 sm:grid-cols-4 gap-4" aria-label="Demo channels">
+          <a href="agenticEmailCumulusEN.html" target="_blank" rel="noopener"
+             class="channel-btn flex flex-col items-center gap-3 rounded-xl border border-white/15 bg-white/5 p-5 text-center">
+            <span class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-2xl text-[#7ee8e0]">
+              <i class="fa-regular fa-envelope"></i>
+            </span>
+            <span class="font-bold text-sm">Email</span>
+            <span class="text-[11px] text-slate-400 leading-snug">Gmail · programs & pre-qual</span>
+          </a>
+
+          <a href="agenticwebCumulusEN.html" target="_blank" rel="noopener"
+             class="channel-btn flex flex-col items-center gap-3 rounded-xl border border-white/15 bg-white/5 p-5 text-center">
+            <span class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-2xl text-[#7ee8e0]">
+              <i class="fa-solid fa-globe"></i>
+            </span>
+            <span class="font-bold text-sm">Web</span>
+            <span class="text-[11px] text-slate-400 leading-snug">Mortgage Center · adaptive chat</span>
+          </a>
+
+          <a href="agenticWhatsappCumulusMortgageEN.html" target="_blank" rel="noopener"
+             class="channel-btn flex flex-col items-center gap-3 rounded-xl border border-white/15 bg-white/5 p-5 text-center">
+            <span class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-2xl text-[#25D366]">
+              <i class="fa-brands fa-whatsapp"></i>
+            </span>
+            <span class="font-bold text-sm">WhatsApp</span>
+            <span class="text-[11px] text-slate-400 leading-snug">Recap · loan specialist</span>
+          </a>
+
+          <a href="fichaclienteCumulusEN.html" target="_blank" rel="noopener"
+             class="channel-btn flex flex-col items-center gap-3 rounded-xl border border-white/15 bg-white/5 p-5 text-center">
+            <span class="w-14 h-14 rounded-full bg-white/10 flex items-center justify-center text-2xl text-[#7ee8e0]">
+              <i class="fa-solid fa-cloud"></i>
+            </span>
+            <span class="font-bold text-sm">Data Cloud</span>
+            <span class="text-[11px] text-slate-400 leading-snug">Customer 360 · sessions</span>
+          </a>
+        </nav>
+      </div>
+    </section>
+
+    <a href="marketingIntelligenceCumulusEN.html" target="_blank" rel="noopener"
+       class="block rounded-xl border border-[#0176d3]/40 bg-[#0176d3]/10 px-5 py-4 hover:bg-[#0176d3]/20 transition text-sm">
+      <i class="fa-solid fa-chart-line text-[#7ee8e0] mr-2"></i>
+      <strong>Marketing Intelligence</strong> — analytics & attribution (optional fifth screen)
+    </a>
+
+    <p class="text-slate-500 text-xs mt-10">
+      Local preview: <code class="text-slate-400">python3 -m http.server 8081</code> in this folder →
+      <code class="text-slate-400">http://localhost:8081/</code>
+    </p>
+  </main>
+
+  <footer class="text-center text-slate-500 text-[11px] py-6 border-t border-white/5">
+    Demo only · Not affiliated with a live production system · © Cumulus Financial Services (fictional)
+  </footer>
+</body>
+</html>

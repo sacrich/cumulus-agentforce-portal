@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>360 Profile — Cumulus Data Cloud</title>
+    <!-- Favicon -->
+    <link rel="icon" href="assets/cumulus-icon.png" type="image/x-icon">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { font-family: 'Montserrat', sans-serif; background-color: #f4f6f9; color: #0B3D5C; margin: 0; padding: 0; overflow: hidden; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .fade-in { animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Estilo del Sidebar Oscuro */
+        .sidebar-dark {
+            background: linear-gradient(180deg, #0B3D5C 0%, #0d1218 100%);
+            color: #ffffff;
+        }
+
+        .separator-line {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin: 16px 0;
+        }
+
+        /* Tabs personalizados */
+        .tab-active { border-bottom: 3px solid #0B3D5C; color: #0B3D5C; font-weight: 600; }
+        .tab-inactive { color: #64748b; font-weight: 500; }
+        .tab-inactive:hover { color: #0B3D5C; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function DataCloudDashboard() {
+            const [loaded, setLoaded] = useState(false);
+            const [activeBottomTab, setActiveBottomTab] = useState('affinities');
+            const [activeTopTab, setActiveTopTab] = useState('related');
+            const [selectedChat, setSelectedChat] = useState(null);
+
+            // Agentforce sessions — aligned with Email → Adaptive Web → WhatsApp demo flow
+            const chatSessions = [
+                {
+                    id: 1,
+                    date: "Today · 10:24 AM",
+                    channel: "WhatsApp",
+                    title: "WhatsApp recap & human handoff",
+                    summary: "Recap on WhatsApp after web. Agent explains WA is not for closing; Marcus asks for a specialist before docs — David Martinez callback scheduled.",
+                    transcript: [
+                        { role: 'agent', text: "Recap: calculator, checklist, rates explored on Mortgage Center." },
+                        { role: 'user', text: "Thanks — reviewing with Emily tonight." },
+                        { role: 'agent', text: "WhatsApp is for updates and your loan team, not to sign the mortgage." },
+                        { role: 'user', text: "Prefer a real person before uploading documents here." },
+                        { role: 'agent', text: "David Martinez — call tomorrow 2:00 PM CT." }
+                    ]
+                },
+                {
+                    id: 2,
+                    date: "Today · 4:12 PM",
+                    channel: "Web App",
+                    title: "Adaptive Website Personalization",
+                    summary: "Mortgage Center chat: Agentforce greets in chat, surfaces three guide cards on-page, then opens calculator, checklist, and rates. WhatsApp recap offered — loan not closed in chat.",
+                    transcript: [
+                        { role: 'agent', text: "I'm Agentforce — here to help with your mortgage. What would you like to know?" },
+                        { role: 'user', text: "We're first-time buyers in Austin — where should we start?" },
+                        { role: 'agent', text: "Surfaced three guides on the page (borrow, checklist, rates) — skim anytime." },
+                        { role: 'user', text: "Open the affordability calculator for our situation." },
+                        { role: 'agent', text: "Calculator opened — income & 10% down pre-filled for APP-2847." },
+                        { role: 'user', text: "What documents should we gather before we apply?" },
+                        { role: 'agent', text: "Opened New Homebuyer Checklist." },
+                        { role: 'user', text: "How do interest rates work for our conventional loan?" },
+                        { role: 'agent', text: "Opened Understand Interest Rates (CUMULUS26 illustrative)." },
+                        { role: 'user', text: "Need to review with Emily before talking to a loan officer." },
+                        { role: 'agent', text: "Offered WhatsApp recap — updates & loan team, not to sign the mortgage in chat." }
+                    ]
+                },
+                {
+                    id: 3,
+                    date: "Today · 2:36 PM",
+                    channel: "Email Agent",
+                    title: "Qualification & Dynamic Offer ($425,000)",
+                    summary: "Campaign 'Path to Homeownership'. Marcus & Emily, first-time buyers. Agentforce presents four loan programs, then opens mortgage hub on cumulusfinserv.com — no property sale by email.",
+                    transcript: [
+                        { role: 'user', text: "Hi! First-time buyers in Austin, $425–450K, 10% down, close by September. Need 30-year fixed and PMI guidance." },
+                        { role: 'agent', text: "Hello Marcus! Four programs fit your profile: Conventional 30-yr, FHA, HomeReady, ARM — pick one to pre-qualify." },
+                        { role: 'user', text: "Conventional 30-year fixed please. PMI and closing costs? Send us to the website hub." },
+                        { role: 'agent', text: "Conventional loan — 30-year fixed, escrow taxes/insurance. Target closing Sep 15." },
+                        { role: 'user', text: "PMI explanation helps. Let's proceed with 20% down scenario and Sep closing." },
+                        { role: 'agent', text: "Noted — Conventional 30-yr on APP-2847. PMI & TX closing costs explained. Everything saved; continue by email or in the **Mortgage Center** on the web." }
+                    ]
+                }
+            ];
+
+            useEffect(() => {
+                setLoaded(true);
+            }, []);
+
+            return (
+                <div className="h-screen flex flex-col bg-[#f4f6f9]">
+                    
+                    {/* GLOBAL TOP NAV */}
+                    <header className="bg-white border-b border-gray-200 h-14 flex items-center justify-between px-4 shrink-0">
+                        <div className="flex items-center gap-6">
+                            <img src="assets/cumulus-logo.png" alt="Cumulus" className="cumulus-logo-sm" style={{height:'26px',maxWidth:'118px'}} />
+                            
+                            <div className="hidden md:flex bg-gray-100 rounded-md px-3 py-1.5 items-center w-80 border border-gray-200">
+                                <i className="fa-solid fa-magnifying-glass text-gray-400 text-sm mr-2"></i>
+                                <input type="text" placeholder="Search..." className="bg-transparent border-none outline-none text-sm w-full text-gray-700 placeholder-gray-400" />
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-4 text-gray-500">
+                            <i className="fa-solid fa-star cursor-pointer hover:text-[#00A3A1] transition"></i>
+                            <i className="fa-solid fa-plus cursor-pointer hover:text-gray-800 transition text-lg"></i>
+                            <i className="fa-solid fa-circle-question cursor-pointer hover:text-gray-800 transition text-lg"></i>
+                            <i className="fa-solid fa-gear cursor-pointer hover:text-gray-800 transition text-lg"></i>
+                            <div className="relative cursor-pointer hover:text-gray-800 transition">
+                                <i className="fa-solid fa-bell text-lg"></i>
+                                <span className="absolute -top-1 -right-1 bg-red-500 w-2.5 h-2.5 rounded-full border-2 border-white"></span>
+                            </div>
+                            <div className="ml-2 w-8 h-8 rounded-full bg-[#0B3D5C] flex items-center justify-center text-white text-xs font-bold cursor-pointer">
+                                AG
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* APP SUB-NAV (Data Cloud Menu) */}
+                    <div className="bg-white border-b border-gray-200 h-12 flex items-center px-4 shrink-0 overflow-x-auto text-sm">
+                        <div className="flex items-center gap-2 mr-6 font-bold text-[#0B3D5C] shrink-0">
+                            <i className="fa-solid fa-braille text-gray-400 mr-1"></i>
+                            Data Cloud
+                        </div>
+                        
+                        <div className="flex h-full gap-6 font-medium text-gray-600 shrink-0 whitespace-nowrap">
+                            <span className="flex items-center border-b-2 border-transparent hover:text-[#0B3D5C] hover:border-gray-300 cursor-pointer transition-colors px-1">Home</span>
+                            <span className="flex items-center border-b-2 border-transparent hover:text-[#0B3D5C] hover:border-gray-300 cursor-pointer transition-colors px-1">Cumulus Agentforce</span>
+                            <span className="flex items-center gap-1 border-b-2 border-transparent hover:text-[#0B3D5C] hover:border-gray-300 cursor-pointer transition-colors px-1">Data Streams <i className="fa-solid fa-chevron-down text-[10px] mt-0.5"></i></span>
+                            <span className="flex items-center gap-1 border-b-2 border-transparent hover:text-[#0B3D5C] hover:border-gray-300 cursor-pointer transition-colors px-1">Data Prep <i className="fa-solid fa-chevron-down text-[10px] mt-0.5"></i></span>
+                            <span className="flex items-center gap-1 border-b-2 border-transparent hover:text-[#0B3D5C] hover:border-gray-300 cursor-pointer transition-colors px-1">Data Lake Objects <i className="fa-solid fa-chevron-down text-[10px] mt-0.5"></i></span>
+                            <span className="flex items-center gap-1 border-b-2 border-transparent hover:text-[#0B3D5C] hover:border-gray-300 cursor-pointer transition-colors px-1">Data Model <i className="fa-solid fa-chevron-down text-[10px] mt-0.5"></i></span>
+                            <span className="flex items-center gap-1 border-b-2 border-transparent hover:text-[#0B3D5C] hover:border-gray-300 cursor-pointer transition-colors px-1">Identity Resolution <i className="fa-solid fa-chevron-down text-[10px] mt-0.5"></i></span>
+                            <span className="flex items-center gap-1 border-b-2 border-transparent hover:text-[#0B3D5C] hover:border-gray-300 cursor-pointer transition-colors px-1">Segments <i className="fa-solid fa-chevron-down text-[10px] mt-0.5"></i></span>
+                            
+                            {/* Active Tab */}
+                            <span className="flex items-center gap-1.5 border-b-2 border-[#0B3D5C] text-[#0B3D5C] font-bold cursor-default px-1">
+                                <i className="fa-regular fa-user text-[#00A3A1]"></i>
+                                Marcus Thompson
+                                <i className="fa-solid fa-xmark text-gray-400 hover:text-red-500 cursor-pointer text-xs ml-1"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* DASHBOARD GRID */}
+                    <div className={`flex-1 flex overflow-hidden p-4 gap-4 ${loaded ? 'fade-in' : 'opacity-0'}`}>
+                        
+                        {/* COLUMN 1: DARK PROFILE SIDEBAR (Left) */}
+                        <div className="w-1/5 sidebar-dark rounded-xl shadow-lg flex flex-col shrink-0 overflow-y-auto">
+                            <div className="p-6">
+                                {/* Photo & Name */}
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-16 h-16 rounded-full bg-[#00A3A1] p-0.5 shrink-0">
+                                        <div className="w-full h-full rounded-full overflow-hidden border-2 border-[#0B3D5C]">
+                                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80" alt="Marcus" className="w-full h-full object-cover"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h2 className="font-bold text-xl leading-tight">Marcus Thompson</h2>
+                                        <p className="text-sm text-gray-400">Madrid, Spain</p>
+                                    </div>
+                                </div>
+
+                                {/* Identity Info */}
+                                <div className="space-y-3 text-[13px] text-gray-300">
+                                    <div className="flex items-center gap-3">
+                                        <i className="fa-regular fa-id-card w-4 text-center"></i>
+                                        <span>Customer ID <strong>BHG-98234M</strong></span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <i className="fa-regular fa-envelope w-4 text-center"></i>
+                                        <span className="truncate">marcus.thompson@gmail.com</span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <i className="fa-brands fa-whatsapp w-4 text-center text-[#25D366]"></i>
+                                        <span>+34 600 123 456 (Opt-in)</span>
+                                    </div>
+                                </div>
+
+                                <div className="separator-line"></div>
+
+                                {/* Loyalty Program */}
+                                <div className="mb-2">
+                                    <div className="flex gap-3 text-[13px] mb-3">
+                                        <i className="fa-solid fa-gem w-4 text-center text-[#00A3A1] mt-0.5"></i>
+                                        <div className="text-gray-400">Cumulus Premier</div>
+                                    </div>
+                                    <div className="px-2 flex flex-col items-center">
+                                        <img 
+                                            src="assets/cumulus-premier-card.svg" 
+                                            alt="Cumulus Premier Gold Card" 
+                                            className="w-full max-w-[200px] h-auto rounded-lg shadow-lg border border-white/20 mb-2 mx-auto block"
+                                        />
+                                        <div className="flex justify-between items-center text-[12px] mt-2 w-full px-2">
+                                            <span className="text-gray-400">Current Tier:</span>
+                                            <span className="font-bold text-white tracking-wide">GOLD</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="separator-line"></div>
+
+                                {/* Category Affinity */}
+                                <div className="flex gap-3 text-[13px] mb-2">
+                                    <i className="fa-solid fa-arrow-down-up-across-line w-4 text-center text-[#00A3A1] mt-0.5"></i>
+                                    <div>
+                                        <div className="text-gray-400 mb-1">Category Affinity</div>
+                                        <div className="font-semibold text-white">Active Family, Wellness, Relaxation</div>
+                                    </div>
+                                </div>
+
+                                <div className="separator-line"></div>
+
+                                {/* Segment */}
+                                <div className="flex gap-3 text-[13px] mb-2">
+                                    <i className="fa-solid fa-chart-pie w-4 text-center text-[#00A3A1] mt-0.5"></i>
+                                    <div>
+                                        <div className="text-gray-400 mb-1">Segment</div>
+                                        <div className="font-semibold text-white">Large Family (High LTV)</div>
+                                    </div>
+                                </div>
+
+                                <div className="separator-line"></div>
+
+                                {/* Lifetime Value */}
+                                <div className="flex gap-3 text-[13px] mb-2">
+                                    <i className="fa-solid fa-cart-shopping w-4 text-center text-[#00A3A1] mt-0.5"></i>
+                                    <div>
+                                        <div className="text-gray-400 mb-1">Lifetime Value</div>
+                                        <div className="font-bold text-lg text-white">$418,750.00</div>
+                                        <div className="text-[11px] text-gray-400">(Average €1,850)</div>
+                                    </div>
+                                </div>
+
+                                <div className="separator-line"></div>
+
+                                {/* Propensity to Purchase */}
+                                <div className="flex gap-3 text-[13px] mb-4">
+                                    <i className="fa-solid fa-cart-arrow-down w-4 text-center text-[#00A3A1] mt-0.5"></i>
+                                    <div className="w-full">
+                                        <div className="text-gray-400 mb-1">Propensity to Purchase: <strong className="text-white">Very High</strong></div>
+                                        <div className="w-full bg-gray-700 h-1.5 rounded-full mt-3 relative">
+                                            <div className="absolute top-1/2 -translate-y-1/2 left-[92%] w-3 h-3 bg-white rounded-full shadow-[0_0_5px_rgba(255,255,255,0.8)]"></div>
+                                            <div className="h-full bg-white rounded-full" style={{width: '92%'}}></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="separator-line"></div>
+
+                                {/* Engagement Score (Gauge) */}
+                                <div className="flex gap-3 text-[13px] mb-2">
+                                    <i className="fa-solid fa-user-check w-4 text-center text-[#00A3A1] mt-1"></i>
+                                    <div className="w-full">
+                                        <div className="text-gray-400 mb-3">Engagement Score <strong className="text-white text-base ml-1">92%</strong></div>
+                                        
+                                        <div className="flex items-end gap-3">
+                                            <div className="relative w-28 h-14 shrink-0">
+                                                <svg viewBox="0 0 100 50" className="w-full h-full overflow-visible">
+                                                    {/* Fondo del medidor */}
+                                                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="10" strokeLinecap="round" />
+                                                    {/* Barra de progreso dorada (92%) */}
+                                                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#00A3A1" strokeWidth="10" strokeLinecap="round" strokeDasharray="125.6" strokeDashoffset="10" />
+                                                    {/* Aguja indicadora */}
+                                                    <g style={{transform: 'rotate(70deg)', transformOrigin: '50px 50px'}}>
+                                                        <polygon points="48,50 52,50 50,12" fill="#ffffff" />
+                                                        <circle cx="50" cy="50" r="4" fill="#ffffff" />
+                                                    </g>
+                                                </svg>
+                                            </div>
+                                            <div className="pb-1">
+                                                <div className="font-bold text-white leading-tight mb-1">Highly Engaged</div>
+                                                <div className="text-[10px] text-gray-400 leading-tight">Compared to 15K<br/>similar audience</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            
+                            {/* Footer Icons (Sidebar) */}
+                            <div className="mt-auto p-6 flex gap-4 text-gray-400 text-lg border-t border-white/10">
+                                <span className="text-xs mr-2 font-medium self-center">Profile Data:</span>
+                                <i className="fa-solid fa-cart-shopping hover:text-white cursor-pointer transition"></i>
+                                <i className="fa-regular fa-snowflake hover:text-white cursor-pointer transition"></i>
+                                <i className="fa-regular fa-heart hover:text-white cursor-pointer transition"></i>
+                                <div className="w-5 h-5 rounded-full bg-gray-400 text-[#0B3D5C] flex items-center justify-center text-[10px] font-black hover:bg-white cursor-pointer transition">
+                                    M
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* COLUMN 2: MAIN CONTENT (Center) */}
+                        <div className="w-3/5 flex flex-col gap-4 overflow-y-auto pr-2">
+                            
+                            {/* TOP CARD: Booked Experiences / Reservas / Live Chat */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col min-h-[300px] shrink-0">
+                                <div className="flex border-b border-gray-200 px-2 pt-2 shrink-0">
+                                    <button 
+                                        onClick={() => { setActiveTopTab('related'); setSelectedChat(null); }} 
+                                        className={`px-4 py-3 text-sm transition-colors ${activeTopTab === 'related' ? 'tab-active' : 'tab-inactive'}`}>
+                                        Related
+                                    </button>
+                                    <button 
+                                        onClick={() => { setActiveTopTab('details'); setSelectedChat(null); }}
+                                        className={`px-4 py-3 text-sm transition-colors ${activeTopTab === 'details' ? 'tab-active' : 'tab-inactive'}`}>
+                                        Details
+                                    </button>
+                                    <button className="px-4 py-3 tab-inactive text-sm">Cases</button>
+                                    <button 
+                                        onClick={() => setActiveTopTab('live_chat')} 
+                                        className={`px-4 py-3 text-sm transition-colors ${activeTopTab === 'live_chat' ? 'tab-active' : 'tab-inactive'}`}>
+                                        Agentforce Sessions
+                                    </button>
+                                </div>
+                                
+                                {/* CONTENIDO: RELATED (Booked Experiences) */}
+                                {activeTopTab === 'related' && (
+                                    <div className="p-5 flex-1 flex flex-col fade-in">
+                                        <h3 className="font-bold text-[#0B3D5C] mb-4">Mortgage & Application Activity</h3>
+                                        
+                                        <div className="border border-gray-200 rounded-lg overflow-hidden flex-1">
+                                            <table className="w-full text-left text-sm">
+                                                <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 font-semibold">
+                                                    <tr>
+                                                        <th className="p-3">Experience Name</th>
+                                                        <th className="p-3 hidden lg:table-cell">Description</th>
+                                                        <th className="p-3 text-center">People</th>
+                                                        <th className="p-3 text-right">Date</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100 text-gray-700">
+                                                    <tr className="hover:bg-gray-50 transition">
+                                                        <td className="p-3 font-medium text-[#0B3D5C]">
+                                                            Conventional 30-yr · APP-2847 · Pre-qual hub
+                                                        </td>
+                                                        <td className="p-3 hidden lg:table-cell text-xs">Specialist callback scheduled via WhatsApp — docs after human review.</td>
+                                                        <td className="p-3 text-center">5</td>
+                                                        <td className="p-3 text-right text-gray-500 whitespace-nowrap">Aug 10, 2024</td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition">
+                                                        <td className="p-3 font-medium text-[#0B3D5C]">Affordability calculator · Web</td>
+                                                        <td className="p-3 hidden lg:table-cell text-xs">Adaptive Mortgage Center — sliders pre-filled APP-2847.</td>
+                                                        <td className="p-3 text-center">2</td>
+                                                        <td className="p-3 text-right text-gray-500 whitespace-nowrap">Today</td>
+                                                    </tr>
+                                                    <tr className="hover:bg-gray-50 transition">
+                                                        <td className="p-3 font-medium text-[#0B3D5C]">Path to Homeownership · Email</td>
+                                                        <td className="p-3 hidden lg:table-cell text-xs">Conventional 30-yr selected; CUMULUS26 noted on file.</td>
+                                                        <td className="p-3 text-center">1</td>
+                                                        <td className="p-3 text-right text-gray-500 whitespace-nowrap">TBD</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <div className="text-center mt-3">
+                                            <a href="#" className="text-sm font-semibold text-blue-600 hover:text-blue-800">View All</a>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* CONTENIDO: DETAILS (Contact & Household) */}
+                                {activeTopTab === 'details' && (
+                                    <div className="p-5 flex-1 flex flex-col fade-in overflow-y-auto bg-gray-50/50">
+                                        <h3 className="font-bold text-[#0B3D5C] mb-4">Customer Details & Relationships</h3>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                            {/* Contact Info Card */}
+                                            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+                                                <h4 className="font-bold text-[#0B3D5C] text-[14px] mb-4 flex items-center gap-2 pb-2 border-b border-gray-100">
+                                                    <i className="fa-solid fa-address-book text-[#00A3A1]"></i> Contact Information
+                                                </h4>
+                                                <div className="space-y-4 text-[13px] flex-1">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Full Name</span>
+                                                        <span className="font-medium text-[#0B3D5C]">Marcus Thompson</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Email Address</span>
+                                                        <span className="font-medium text-[#0B3D5C]">marcus.thompson@gmail.com</span>
+                                                    </div>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-gray-500">Mobile Phone</span>
+                                                        <div className="text-right">
+                                                            <span className="font-medium text-[#0B3D5C] block">+34 600 123 456</span>
+                                                            <span className="text-[10px] text-green-600 font-bold bg-green-50 px-1.5 py-0.5 rounded uppercase tracking-wider">WhatsApp Opt-in</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Mailing Address</span>
+                                                        <span className="font-medium text-[#0B3D5C] text-right">45 Velázquez St, 3rd Right<br/>28001 Madrid, Spain</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-gray-500">Preferred Language</span>
+                                                        <span className="font-medium text-[#0B3D5C]">English (Primary) / Spanish</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Household Members Card */}
+                                            <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex flex-col">
+                                                <div className="flex justify-between items-center mb-4 pb-2 border-b border-gray-100">
+                                                    <h4 className="font-bold text-[#0B3D5C] text-[14px] flex items-center gap-2">
+                                                        <i className="fa-solid fa-house-chimney-user text-[#00A3A1]"></i> Household Members
+                                                    </h4>
+                                                    <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full">5 Members</span>
+                                                </div>
+                                                <div className="space-y-3 flex-1">
+                                                    <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition border border-transparent hover:border-gray-100 bg-gray-50/50">
+                                                        <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">SM</div>
+                                                        <div className="flex-1">
+                                                            <p className="text-[13px] font-bold text-[#0B3D5C]">Marcus Thompson</p>
+                                                            <p className="text-[11px] text-gray-500">Primary</p>
+                                                        </div>
+                                                        <i className="fa-solid fa-star text-[#00A3A1] text-xs" title="Primary Contact"></i>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition border border-transparent hover:border-gray-100">
+                                                        <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold shrink-0">DM</div>
+                                                        <div className="flex-1">
+                                                            <p className="text-[13px] font-bold text-[#0B3D5C]">David Mitchell</p>
+                                                            <p className="text-[11px] text-gray-500">Spouse / Adult</p>
+                                                        </div>
+                                                        <i className="fa-solid fa-link text-gray-300 text-xs"></i>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition border border-transparent hover:border-gray-100">
+                                                        <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold shrink-0">JM</div>
+                                                        <div className="flex-1">
+                                                            <p className="text-[13px] font-bold text-[#0B3D5C]">James Mitchell</p>
+                                                            <p className="text-[11px] text-gray-500">Child (16 years)</p>
+                                                        </div>
+                                                        <i className="fa-solid fa-link text-gray-300 text-xs"></i>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition border border-transparent hover:border-gray-100">
+                                                        <div className="w-9 h-9 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-bold shrink-0">EM</div>
+                                                        <div className="flex-1">
+                                                            <p className="text-[13px] font-bold text-[#0B3D5C]">Emma Mitchell</p>
+                                                            <p className="text-[11px] text-gray-500">Child (14 years)</p>
+                                                        </div>
+                                                        <i className="fa-solid fa-link text-gray-300 text-xs"></i>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition border border-transparent hover:border-gray-100">
+                                                        <div className="w-9 h-9 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center text-xs font-bold shrink-0">LM</div>
+                                                        <div className="flex-1">
+                                                            <p className="text-[13px] font-bold text-[#0B3D5C]">Lily Mitchell</p>
+                                                            <p className="text-[11px] text-gray-500">Child (4 years)</p>
+                                                        </div>
+                                                        <i className="fa-solid fa-link text-gray-300 text-xs"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* CONTENIDO: LIVE CHAT LOGS (Listado de sesiones) */}
+                                {activeTopTab === 'live_chat' && !selectedChat && (
+                                    <div className="p-5 flex-1 flex flex-col fade-in">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="font-bold text-[#0B3D5C] flex items-center gap-2">
+                                                <i className="fa-regular fa-comments text-gray-400"></i> Agentforce Session Logs
+                                            </h3>
+                                            <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-full border border-gray-200">{chatSessions.length} Sessions</span>
+                                        </div>
+                                        
+                                        <div className="space-y-4 overflow-y-auto flex-1 pr-2">
+                                            {chatSessions.map((session) => (
+                                                <div key={session.id} className="border border-gray-200 rounded-lg p-4 hover:border-[#00A3A1] hover:shadow-sm transition bg-white flex flex-col gap-3">
+                                                    <div className="flex justify-between items-start">
+                                                        <div>
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="text-sm font-bold text-[#0B3D5C]">{session.title}</span>
+                                                                <span className="inline-flex items-center gap-1 bg-gray-50 border border-gray-200 text-gray-600 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                                                    {session.channel === 'WhatsApp' ? <i className="fa-brands fa-whatsapp text-[#25D366]"></i> : 
+                                                                     session.channel === 'Web App' ? <i className="fa-solid fa-globe text-blue-500"></i> : 
+                                                                     <i className="fa-regular fa-envelope text-gray-500"></i>} {session.channel}
+                                                                </span>
+                                                            </div>
+                                                            <span className="text-[11px] text-gray-400"><i className="fa-regular fa-clock mr-1"></i> {session.date}</span>
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => setSelectedChat(session)}
+                                                            className="text-xs font-bold text-[#00A3A1] bg-[#f0f9f8] border border-[#b8e6e3] px-3 py-1.5 rounded hover:bg-[#00A3A1] hover:text-white transition shadow-sm">
+                                                            View Transcript
+                                                        </button>
+                                                    </div>
+                                                    <p className="text-[12px] text-gray-600 leading-relaxed bg-gray-50 p-3 rounded border border-gray-100">
+                                                        <strong className="text-gray-700 font-medium">AI Summary:</strong> {session.summary}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* CONTENIDO: LIVE CHAT TRANSCRIPT (Detalle de la sesión) */}
+                                {activeTopTab === 'live_chat' && selectedChat && (
+                                    <div className="flex-1 flex flex-col fade-in overflow-hidden h-full">
+                                        <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50 shrink-0">
+                                            <div className="flex items-center gap-4">
+                                                <button 
+                                                    onClick={() => setSelectedChat(null)}
+                                                    className="w-8 h-8 rounded-full bg-white border border-gray-300 flex items-center justify-center hover:bg-gray-200 transition text-gray-600 shadow-sm">
+                                                    <i className="fa-solid fa-arrow-left text-xs"></i>
+                                                </button>
+                                                <div>
+                                                    <h4 className="font-bold text-[#0B3D5C] text-sm leading-tight">{selectedChat.title}</h4>
+                                                    <span className="text-[10px] text-gray-500 font-medium">{selectedChat.date} • {selectedChat.channel}</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5 bg-white px-2 py-1 rounded border border-gray-200">
+                                                <i className="fa-solid fa-file-lines"></i> Original Transcript
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="p-5 flex-1 overflow-y-auto bg-white space-y-4">
+                                            {selectedChat.transcript.map((msg, idx) => (
+                                                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                                    {msg.role === 'agent' && (
+                                                        <div className="w-6 h-6 rounded-full bg-white border border-[#00A3A1] flex items-center justify-center shrink-0 mr-2 mt-1 shadow-sm p-1">
+                                                            <img src="assets/agentforce_icon.webp" alt="Agentforce" className="w-full h-full object-contain" />
+                                                        </div>
+                                                    )}
+                                                    
+                                                    <div className={`max-w-[85%] px-3.5 py-2.5 text-[12px] leading-relaxed shadow-sm ${
+                                                        msg.role === 'user' 
+                                                            ? 'bg-[#f4f6f9] text-[#0B3D5C] border border-gray-200 rounded-2xl rounded-tr-sm font-medium' 
+                                                            : 'bg-[#f0f9f8] border border-[#b8e6e3] text-[#202124] rounded-2xl rounded-tl-sm'
+                                                    }`}>
+                                                        {msg.text}
+                                                    </div>
+
+                                                    {msg.role === 'user' && (
+                                                        <div className="w-6 h-6 rounded-full bg-[#0B3D5C] text-white flex items-center justify-center shrink-0 ml-2 mt-1 font-bold text-[10px] shadow-sm">
+                                                            S
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* BOTTOM CARD: Customer Affinities / Insights */}
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col shrink-0">
+                                <div className="flex border-b border-gray-200 px-2 pt-2">
+                                    <button 
+                                        onClick={() => setActiveBottomTab('affinities')} 
+                                        className={`px-4 py-3 text-sm transition-colors ${activeBottomTab === 'affinities' ? 'tab-active' : 'tab-inactive'}`}>
+                                        Customer Affinities
+                                    </button>
+                                    <button 
+                                        onClick={() => setActiveBottomTab('insights')} 
+                                        className={`px-4 py-3 text-sm transition-colors ${activeBottomTab === 'insights' ? 'tab-active' : 'tab-inactive'}`}>
+                                        Insights
+                                    </button>
+                                    <button className="px-4 py-3 tab-inactive text-sm">Details</button>
+                                </div>
+                                
+                                {/* CONTENIDO: AFFINITIES (Tab 1) */}
+                                {activeBottomTab === 'affinities' && (
+                                    <div className="p-5 flex-1 fade-in">
+                                        <div className="flex items-center gap-4 mb-6 text-sm text-gray-600">
+                                            <span>Showing Top in:</span>
+                                            <select className="border border-gray-300 rounded-md px-3 py-1.5 outline-none focus:border-[#0B3D5C] bg-white">
+                                                <option>Category</option>
+                                            </select>
+                                            <span className="ml-2">By:</span>
+                                            <select className="border border-gray-300 rounded-md px-3 py-1.5 outline-none focus:border-[#0B3D5C] bg-white">
+                                                <option>Zero-Party Data Interactions</option>
+                                            </select>
+                                        </div>
+
+                                        {/* Bar Charts */}
+                                        <div className="space-y-5 max-w-2xl">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-[170px] shrink-0 text-right font-medium text-[#0B3D5C] text-sm">Kids & Teens Entertainment</div>
+                                                <div className="flex-1 bg-gray-100 h-6 rounded-sm overflow-hidden flex">
+                                                    <div className="bg-[#3b82f6] h-full flex items-center justify-end px-3 text-white text-xs font-bold" style={{width: '85%'}}>85</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-[170px] shrink-0 text-right font-medium text-[#0B3D5C] text-sm">High-Speed Wi-Fi</div>
+                                                <div className="flex-1 bg-gray-100 h-6 rounded-sm overflow-hidden flex">
+                                                    <div className="bg-[#3b82f6] h-full flex items-center justify-end px-3 text-white text-xs font-bold" style={{width: '72%'}}>72</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-[170px] shrink-0 text-right font-medium text-[#0B3D5C] text-sm">Sports / Active Life</div>
+                                                <div className="flex-1 bg-gray-100 h-6 rounded-sm overflow-hidden flex">
+                                                    <div className="bg-[#3b82f6] h-full flex items-center justify-end px-3 text-white text-xs font-bold" style={{width: '65%'}}>65</div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-[170px] shrink-0 text-right font-medium text-[#0B3D5C] text-sm">Relaxation & Disconnection</div>
+                                                <div className="flex-1 bg-gray-100 h-6 rounded-sm overflow-hidden flex">
+                                                    <div className="bg-[#3b82f6] h-full flex items-center justify-end px-3 text-white text-xs font-bold" style={{width: '58%'}}>58</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-gray-400 mt-6 italic"><i className="fa-solid fa-sparkles text-[#00A3A1] mr-1"></i> Data automatically extracted from the user's conversational interactions.</p>
+                                    </div>
+                                )}
+
+                                {/* CONTENIDO: INSIGHTS (Tab 2) */}
+                                {activeBottomTab === 'insights' && (
+                                    <div className="p-5 flex-1 fade-in overflow-y-auto">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <img src="assets/agentforce_icon.webp" alt="Agentforce" className="w-4 h-4 object-contain" />
+                                            <h3 className="font-bold text-[#0B3D5C] text-sm uppercase tracking-wide">Agentforce Actionable Insights</h3>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
+                                            
+                                            {/* Insight 1: Next Best Action */}
+                                            <div className="bg-[#f0f9f8] border border-[#b8e6e3] rounded-lg p-4 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                                                <div className="absolute top-0 right-0 w-16 h-16 bg-[#00A3A1] opacity-5 rounded-bl-full"></div>
+                                                <div>
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <i className="fa-solid fa-bullseye text-[#00A3A1]"></i>
+                                                        <h4 className="font-bold text-[#0B3D5C] text-[13px]">Next-Best-Action (Cross-Sell)</h4>
+                                                    </div>
+                                                    <p className="text-xs text-gray-600 leading-relaxed">
+                                                        Offer <strong>rate lock reminder</strong> and Premier checking bundle before David Martinez callback — Marcus is high-intent after calculator + checklist on web.
+                                                    </p>
+                                                </div>
+                                                <button className="mt-4 text-[10px] w-fit bg-white border border-[#00A3A1] text-[#00A3A1] px-3 py-1.5 rounded font-bold hover:bg-[#00A3A1] hover:text-white transition shadow-sm">LAUNCH CAMPAIGN</button>
+                                            </div>
+
+                                            {/* Insight 2: Comportamiento de Compra */}
+                                            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <i className="fa-solid fa-cart-shopping text-blue-500"></i>
+                                                    <h4 className="font-bold text-[#0B3D5C] text-[13px]">Purchasing Behavior</h4>
+                                                </div>
+                                                    <p className="text-xs text-gray-600 leading-relaxed">
+                                                        Engaged via <strong>Adaptive Website</strong> (full-page calculator & guides). Reviewed with Emily on WhatsApp; requested <strong>human loan specialist</strong> before document upload — prefers phone over closing in chat.
+                                                    </p>
+                                            </div>
+
+                                            {/* Insight 3: Canal Preferido */}
+                                            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <i className="fa-brands fa-whatsapp text-[#25D366]"></i>
+                                                    <h4 className="font-bold text-[#0B3D5C] text-[13px]">Channel Affinity</h4>
+                                                </div>
+                                                <p className="text-xs text-gray-600 leading-relaxed">
+                                                    Strong WhatsApp engagement after web recap. Prioritize this channel for document checklist and callback reminders — Marcus prefers human specialist before upload.
+                                                </p>
+                                            </div>
+
+                                            {/* Insight 4: Afinidad Experiencias */}
+                                            <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <i className="fa-solid fa-ticket text-[#00A3A1]"></i>
+                                                    <h4 className="font-bold text-[#0B3D5C] text-[13px]">Affinity for Group Experiences</h4>
+                                                </div>
+                                                <p className="text-xs text-gray-600 leading-relaxed">
+                                                    High intent for <strong>first-time homebuyer</strong> education. Recommend PMI buyout and closing-cost assistance add-ons when specialist follows up on APP-2847.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                        </div>
+
+                        {/* COLUMN 3: OMNICHANNEL JOURNEY (Right) */}
+                        <div className="w-1/5 bg-white rounded-xl shadow-sm border border-gray-200 shrink-0 flex flex-col overflow-hidden">
+                            <div className="p-5 border-b border-gray-100 flex items-center gap-2">
+                                <i className="fa-solid fa-route text-gray-400 text-lg"></i>
+                                <h2 className="font-bold text-lg text-[#0B3D5C]">Omnichannel Journey</h2>
+                            </div>
+                            
+                            <div className="flex-1 overflow-y-auto p-5">
+                                <div className="relative border-l-2 border-gray-100 ml-4 mt-2 pb-4 space-y-8">
+                                    
+                                    {/* 1 — Specialist callback */}
+                                    <div className="relative pl-6">
+                                        <div className="absolute -left-[17px] top-2 w-8 h-8 bg-white border border-[#00A3A1] rounded-full flex items-center justify-center z-10 overflow-hidden shadow-sm p-1">
+                                            <img src="assets/agentforce_icon.webp" alt="Agentforce" className="w-full h-full object-contain" />
+                                        </div>
+                                        <div className="bg-white border border-[#00A3A1] rounded-xl p-4 shadow-sm">
+                                            <div className="flex justify-between items-start mb-1.5">
+                                                <span className="text-[10px] font-bold text-[#00A3A1] uppercase tracking-wide">Cumulus Agentforce</span>
+                                                <span className="text-[10px] text-gray-400">Tomorrow</span>
+                                            </div>
+                                            <h4 className="font-bold text-[#0B3D5C] text-[14px] mb-1.5">Loan specialist callback</h4>
+                                            <p className="text-[12px] text-gray-600 mb-3 leading-relaxed">Marcus asked for a <strong>real person</strong> before uploading documents. <strong>David Martinez</strong> scheduled 2:00 PM CT — APP-2847.</p>
+                                            <div className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 text-gray-600 text-[10px] font-medium px-2.5 py-1 rounded">
+                                                <i className="fa-brands fa-whatsapp text-[#25D366]"></i> WhatsApp
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 2 — WA recap */}
+                                    <div className="relative pl-6">
+                                        <div className="absolute -left-[17px] top-0 w-8 h-8 bg-white border border-[#25D366] rounded-full flex items-center justify-center z-10">
+                                            <i className="fa-brands fa-whatsapp text-[#25D366] text-[15px]"></i>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-start mb-0.5">
+                                                <h4 className="font-bold text-[#0B3D5C] text-[14px]">Web recap on WhatsApp</h4>
+                                                <span className="text-[10px] text-gray-400 mt-0.5">Today</span>
+                                            </div>
+                                            <p className="text-[12px] text-gray-600 leading-relaxed">Recap of calculator, checklist & rates. Marcus reviewing with Emily — WA for updates, not to close the loan in chat.</p>
+                                        </div>
+                                    </div>
+
+                                    {/* 3 — Adaptive Web */}
+                                    <div className="relative pl-6">
+                                        <div className="absolute -left-[17px] top-0 w-8 h-8 bg-white border border-[#3b82f6] rounded-full flex items-center justify-center z-10">
+                                            <i className="fa-solid fa-globe text-[#3b82f6] text-[13px]"></i>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-start mb-0.5">
+                                                <h4 className="font-bold text-[#0B3D5C] text-[14px]">Mortgage Center · Adaptive Web</h4>
+                                                <span className="text-[10px] text-gray-400 mt-0.5">Today · 4:12 PM</span>
+                                            </div>
+                                            <p className="text-[12px] text-gray-600 mb-2 leading-relaxed">Three guide cards surfaced in-page, then full pages: calculator, checklist, rates. Chat-driven navigation — APP-2847.</p>
+                                            <div className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 text-gray-600 text-[10px] font-medium px-2.5 py-1 rounded">
+                                                <i className="fa-solid fa-wand-magic-sparkles text-[#00A3A1]"></i> Web
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 4 — Email qualification */}
+                                    <div className="relative pl-6">
+                                        <div className="absolute -left-[17px] top-0 w-8 h-8 bg-white border border-[#00A3A1] rounded-full flex items-center justify-center z-10 overflow-hidden shadow-sm p-1">
+                                            <img src="assets/agentforce_icon.webp" alt="Agentforce" className="w-full h-full object-contain" />
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-start mb-0.5">
+                                                <h4 className="font-bold text-[#0B3D5C] text-[14px]">Conventional 30-yr · APP-2847</h4>
+                                                <span className="text-[10px] text-gray-400 mt-0.5">Today · 2:36 PM</span>
+                                            </div>
+                                            <p className="text-[12px] text-gray-600 mb-2 leading-relaxed">Four loan programs offered; Marcus chose Conventional. PMI & closing costs explained — file saved, CTA to Mortgage Center.</p>
+                                            <div className="inline-flex items-center gap-1.5 bg-gray-50 border border-gray-200 text-gray-600 text-[10px] font-medium px-2.5 py-1 rounded">
+                                                <i className="fa-regular fa-envelope"></i> Email
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 5 — Campaign entry */}
+                                    <div className="relative pl-6">
+                                        <div className="absolute -left-[17px] top-0 w-8 h-8 bg-white border border-gray-300 rounded-full flex items-center justify-center z-10">
+                                            <i className="fa-regular fa-envelope text-gray-400 text-[13px]"></i>
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between items-start mb-0.5">
+                                                <h4 className="font-bold text-[#0B3D5C] text-[14px]">Campaign · Path to Homeownership</h4>
+                                                <span className="text-[10px] text-gray-400 mt-0.5">2 weeks ago</span>
+                                            </div>
+                                            <p className="text-[12px] text-gray-600 leading-relaxed">Marcus & Emily open campaign — first-time buyers, Austin, $425–450K, September closing goal.</p>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<DataCloudDashboard />);
+    </script>
+</body>
+</html>

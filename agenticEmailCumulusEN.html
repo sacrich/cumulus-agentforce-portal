@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail - Your pre-approval is ready — finalize your Cumulus mortgage.</title>
+    <!-- Favicon -->
+    <link rel="icon" href="assets/cumulus-icon.png" type="image/x-icon">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Tipografía UI de Gmail y cuerpo */
+        body { font-family: 'Google Sans', 'Inter', sans-serif; background-color: #f6f8fc; }
+        
+        /* Contenedor principal para no hacer scroll en la ventana, solo en el contenido */
+        .app-wrapper { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* Animación de entrada */
+        .email-item { opacity: 0; transform: translateY(20px); transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); display: none; }
+        .email-item.active { display: block; }
+        .email-item.visible { opacity: 1; transform: translateY(0); }
+        
+        /* ESTILOS ESPECÍFICOS DEL EMAIL Cumulus */
+        .clean-email { font-family: 'Montserrat', sans-serif; color: #333333; }
+        .cumulus-navy { color: #0B3D5C; }
+        .cumulus-bg-navy { background-color: #0B3D5C; }
+        .cumulus-teal { color: #00A3A1; }
+
+        .btn-agentforce {
+            background-color: #f0f9f8;
+            color: #00A3A1;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            border: 1px solid #00A3A1;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary { 
+            background-color: #0B3D5C;
+            color: white; 
+            width: 100%; 
+            padding: 14px; 
+            font-weight: 600; 
+            font-size: 13px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            border-radius: 4px; 
+            display: block; 
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .btn-primary:hover { background-color: #145070; }
+
+        /* Estilos del sidebar clonado de Gmail */
+        .nav-item { display: flex; align-items: center; padding: 0 12px 0 26px; height: 32px; font-size: 14px; color: #202124; border-radius: 0 16px 16px 0; margin-right: 16px; cursor: pointer; }
+        .nav-item:hover { background-color: #f1f3f4; }
+        .nav-item.active { background-color: #d3e3fd; color: #041e49; font-weight: 600; }
+        .nav-item i { width: 24px; font-size: 16px; margin-right: 18px; color: #444746; }
+        .nav-item.active i { color: #041e49; }
+
+        /* Scrollbar personalizado */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #bdc1c6; }
+        
+        /* Animación cursor de escritura */
+        .typing-cursor { animation: blink 1s step-end infinite; font-weight: normal; color: #0B3D5C; margin-left: 2px; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Estilos del Banner de Nuevo Mensaje (Estilo Gmail) */
+        .message-banner { 
+            display: none; 
+            background-color: #f9edbe; 
+            border: 1px solid #f0c36d; 
+            padding: 6px 12px; 
+            font-size: 13px; 
+            color: #000; 
+            border-radius: 2px; 
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); 
+            opacity: 0; 
+            transform: translateY(5px); 
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            width: max-content;
+            margin-left: auto; 
+            margin-right: 8px;
+            margin-bottom: 20px;
+            margin-top: -12px;
+            position: relative;
+            z-index: 10;
+        }
+        .message-banner.visible-banner { 
+            display: flex; 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+        @media (max-width: 768px) { 
+            .message-banner { margin-right: 0; margin-left: auto; } 
+        }
+        .banner-link {
+            color: #000;
+            text-decoration: underline;
+            cursor: pointer;
+            margin-left: 2px;
+        }
+        .banner-link:hover { opacity: 0.7; }
+
+        /* Demo ends at email4_3 — hide follow-up thread */
+        #compose2_7, #email4_4, #email4_5, #compose2_8, #email4_6, #email5, #compose3, #email7, #email8 {
+            display: none !important;
+        }
+        #viewWebBtn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 420px;
+            margin-top: 8px;
+            padding: 14px 24px;
+            background: linear-gradient(180deg, #33b852 0%, #2e9e4f 100%);
+            color: #fff !important;
+            font-size: 13px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            text-decoration: none !important;
+            border-radius: 9999px;
+            box-shadow: 0 4px 14px rgba(46, 158, 79, 0.45);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        #viewWebBtn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(46, 158, 79, 0.55); }
+        #viewWebBtn.demo-highlight {
+            animation: webBtnPulse 2s ease-in-out infinite;
+            outline: 3px solid #00A3A1;
+            outline-offset: 4px;
+        }
+        @keyframes webBtnPulse {
+            0%, 100% { box-shadow: 0 4px 14px rgba(46, 158, 79, 0.45); }
+            50% { box-shadow: 0 8px 28px rgba(0, 163, 161, 0.65); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <!-- GMAIL HEADER CLONADO -->
+        <header class="flex items-center justify-between px-4 py-2 bg-[#f6f8fc] shrink-0">
+            <div class="flex items-center gap-4 w-[238px] shrink-0">
+                <div class="p-3 rounded-full hover:bg-gray-200 cursor-pointer transition">
+                    <i class="fa-solid fa-bars text-gray-600 text-[18px]"></i>
+                </div>
+                <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_default_1x_r5.png" alt="Gmail" class="h-10">
+            </div>
+            
+            <div class="flex-1 max-w-[720px] px-2">
+                <div class="bg-[#eaf1fb] hover:bg-white hover:shadow flex items-center px-4 py-2.5 rounded-full transition-all">
+                    <i class="fa-solid fa-magnifying-glass text-gray-600 ml-1 mr-4"></i>
+                    <input type="text" placeholder="Search mail" class="bg-transparent border-none outline-none w-full text-[15px] text-gray-700">
+                    <i class="fa-solid fa-sliders text-gray-600 ml-4 p-2 rounded-full hover:bg-gray-100 cursor-pointer"></i>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-1 shrink-0 px-2 text-gray-600">
+                <div class="p-2.5 rounded-full hover:bg-gray-200 cursor-pointer"><i class="fa-regular fa-circle-question text-[20px]"></i></div>
+                <div class="p-2.5 rounded-full hover:bg-gray-200 cursor-pointer"><i class="fa-solid fa-gear text-[20px]"></i></div>
+                <div class="p-2.5 rounded-full hover:bg-gray-200 cursor-pointer mr-2"><i class="fa-solid fa-braille text-[20px]"></i></div>
+                <div class="w-8 h-8 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold text-sm cursor-pointer ring-2 ring-white">S</div>
+            </div>
+        </header>
+
+        <!-- CUERPO PRINCIPAL -->
+        <div class="flex flex-1 overflow-hidden">
+            
+            <!-- LEFT SIDEBAR -->
+            <aside class="w-[256px] hidden md:flex flex-col bg-[#f6f8fc] shrink-0 py-2">
+                <div class="pl-2 mb-4">
+                    <button class="bg-[#c2e7ff] hover:bg-[#b5defb] text-[#001d35] flex items-center gap-4 px-4 py-3.5 rounded-2xl font-medium text-[14px] transition shadow-sm mx-2">
+                        <i class="fa-solid fa-pencil text-[18px]"></i>
+                        Compose
+                    </button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto">
+                    <div class="nav-item active">
+                        <i class="fa-solid fa-inbox"></i>
+                        <span class="flex-1">Inbox</span>
+                        <span class="text-xs font-bold mr-1">12</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fa-regular fa-star"></i>
+                        <span class="flex-1">Starred</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fa-regular fa-clock"></i>
+                        <span class="flex-1">Snoozed</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fa-regular fa-bookmark"></i>
+                        <span class="flex-1">Important</span>
+                    </div>
+                    <div class="nav-item">
+                        <i class="fa-regular fa-paper-plane"></i>
+                        <span class="flex-1">Sent</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- EMAIL CONTENT AREA -->
+            <div class="flex-1 bg-white md:rounded-2xl md:mr-4 md:mb-4 shadow-sm flex flex-col overflow-hidden relative">
+                
+                <!-- Toolbar Pegajoso -->
+                <div class="sticky top-0 bg-white px-2 py-2 flex items-center justify-between text-[#444746] z-10">
+                    <div class="flex items-center gap-1">
+                        <div class="p-2.5 rounded-full hover:bg-[#f1f3f4] cursor-pointer"><i class="fa-solid fa-arrow-left text-[15px]"></i></div>
+                        <div class="w-[1px] h-5 bg-gray-200 mx-2"></div>
+                        <div class="p-2.5 rounded-full hover:bg-[#f1f3f4] cursor-pointer"><i class="fa-solid fa-box-archive text-[15px]"></i></div>
+                        <div class="p-2.5 rounded-full hover:bg-[#f1f3f4] cursor-pointer"><i class="fa-solid fa-circle-exclamation text-[15px]"></i></div>
+                        <div class="p-2.5 rounded-full hover:bg-[#f1f3f4] cursor-pointer"><i class="fa-regular fa-trash-can text-[15px]"></i></div>
+                        <div class="w-[1px] h-5 bg-gray-200 mx-2"></div>
+                        <div class="p-2.5 rounded-full hover:bg-[#f1f3f4] cursor-pointer"><i class="fa-regular fa-envelope text-[15px]"></i></div>
+                    </div>
+                </div>
+
+                <!-- Scrollable Content -->
+                <div class="flex-1 overflow-y-auto px-4 md:px-14 py-4" id="scrollContainer">
+                    
+                    <!-- Subject -->
+                    <div class="flex items-center justify-between mb-8 pl-12 pr-4 mt-2">
+                        <div class="flex items-center gap-3 flex-wrap">
+                            <h1 class="text-[22px] text-[#1f1f1f] font-normal leading-tight">Your pre-approval is ready — finalize your Cumulus mortgage.</h1>
+                            <span class="bg-[#e8eaed] text-[#3c4043] text-[11px] font-medium px-2 py-0.5 rounded flex items-center gap-1.5 cursor-pointer hover:bg-gray-300">
+                                Inbox <i class="fa-solid fa-xmark text-[10px]"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 1: PROMOCIÓN Cumulus VERANO -->
+                    <div class="email-item mb-2" id="email1">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 border border-gray-200 rounded-full bg-[#0B3D5C] flex items-center justify-center shrink-0">
+                                <span class="text-white font-bold text-xs">P</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Cumulus Financial Services <span class="text-xs font-normal text-gray-500">&lt;experiences@cumulusfinserv.com&gt;</span></span>
+                                        <span class="text-xs text-gray-500 flex items-center gap-1">to me <i class="fa-solid fa-caret-down text-[10px]"></i></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs email-ts"></span>
+                                        <i class="fa-regular fa-star cursor-pointer hover:text-gray-700"></i>
+                                        <i id="replyIcon1" class="fa-solid fa-reply cursor-pointer hover:text-gray-700" title="Reply"></i>
+                                        <i class="fa-solid fa-ellipsis-vertical cursor-pointer hover:text-gray-700"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- BODY DEL EMAIL -->
+                        <div class="pl-0 md:pl-12 mt-4 pb-8 border-b border-gray-100 relative">
+                            <div class="bg-white clean-email border border-gray-200 rounded-lg shadow-sm overflow-hidden" style="max-width: 620px;">
+                                
+                                <!-- Cabecera Cumulus & Status -->
+                                <div class="bg-[#0B3D5C] px-6 py-5 flex flex-col items-center justify-center border-b border-gray-100">
+                                    <img src="assets/cumulus-logo.png" alt="Cumulus Financial Services" class="h-7 max-w-[120px] w-auto object-contain mb-3">
+                                    <span class="bg-[#00A3A1] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
+                                        Cumulus Premier • Special Member
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <!-- Imagen Hero (Resort Familiar GIF) respetando el tamaño y proporciones -->
+                                    <div class="relative bg-[#0B3D5C]">
+                                        <img src="assets/cumulus-hero-home.jpg" alt="Path to homeownership" class="w-full h-auto object-cover block max-h-[220px]">
+                                        <div class="absolute inset-0 bg-gradient-to-t from-[#0B3D5C] via-transparent to-transparent flex flex-col justify-end p-6 md:p-8 pointer-events-none">
+                                            <p class="text-white uppercase tracking-[0.2em] text-xs font-bold mb-2">Cumulus Premier</p>
+                                            <h1 class="text-white text-xl md:text-2xl font-light leading-tight drop-shadow-md">Life simplified — your path to homeownership.</h1>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-6 md:p-8">
+                                        <!-- Botón Agente -->
+                                        <div class="text-center mb-8">
+                                            <span class="btn-agentforce">
+                                                <i class="fa-solid fa-sparkles text-[#00A3A1]"></i> Cumulus Agentforce
+                                            </span>
+                                        </div>
+
+                                        <p class="text-[15px] leading-relaxed text-gray-700 mb-6 font-medium">
+                                            <em>Hello, Marcus.</em><br><br>
+                                            As a <strong>Cumulus Premier</strong> member, you have early access to our AI mortgage assistant. Buying your first home can feel overwhelming — we're putting Agentforce at your disposal to simplify pre-approval, rate options, and closing.
+                                        </p>
+                                        
+                                        <p class="text-[15px] leading-relaxed text-gray-700 mb-6 font-medium">
+                                            At Cumulus Financial Services we bring together checking, savings, borrowing, and investing — so you can move from pre-qualification to keys with one trusted partner.
+                                        </p>
+
+                                        <!-- Call to Action Banner Agéntico -->
+                                        <div class="mt-8 relative bg-[#f0f9f8] border border-[#b8e6e3] rounded-xl p-8 text-center">
+                                            <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00A3A1] text-white text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                                                Rate from 6.25% APR
+                                            </div>
+                                            <h3 class="text-[18px] font-bold text-[#0B3D5C] mb-3 leading-tight mt-2">
+                                                Let's find your home loan together
+                                            </h3>
+                                            <p class="text-[14px] text-gray-600 mb-4">
+                                                <strong>Reply directly to this email</strong> with your situation. Agentforce will match programs in seconds and apply promo code <strong>CUMULUS26</strong> for <strong>0.25% off</strong> your rate (plus first-time buyer credits when eligible).
+                                            </p>
+                                            <div class="bg-white border border-[#b8e6e3] p-3 rounded text-[13px] text-gray-500 shadow-inner italic inline-block w-full text-left">
+                                                "Emily and I are first-time buyers in Austin, ~$450K budget, 10% down, closing by September..."
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- BOTÓN REPLY DE EMAIL 1 -->
+                            <div class="mt-4 flex gap-3" id="replyArea1">
+                                <button id="replyBtn1" class="border border-gray-300 rounded-full px-6 py-2 text-[#444746] font-medium text-[14px] hover:bg-[#f1f3f4] transition flex items-center gap-2 cursor-pointer shadow-sm">
+                                    <i class="fa-solid fa-reply"></i> Reply
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COMPOSE 1: SARAH RESPONDE EXPONIENDO EL PROBLEMA -->
+                    <div class="email-item pt-4" id="compose1">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold text-lg shrink-0 z-10 shadow-sm">S</div>
+                            <div class="flex-1 border border-gray-200 rounded-xl shadow-lg bg-white overflow-hidden flex flex-col relative mt-1">
+                                <div class="px-4 py-2 border-b border-gray-100 flex items-center text-[13px] text-gray-500 bg-gray-50">
+                                    <i class="fa-solid fa-reply mr-2 text-gray-400"></i>
+                                    <span class="mr-2">To:</span>
+                                    <span class="bg-white px-2 py-0.5 rounded-md border border-gray-200 text-gray-700 flex items-center gap-1 shadow-sm">Cumulus Financial Services <i class="fa-solid fa-xmark text-[10px] ml-1"></i></span>
+                                </div>
+                                <div class="p-5 text-[14px] text-[#202124] min-h-[120px] outline-none bg-white leading-relaxed cursor-text" contenteditable="false">
+                                    <!-- Contenedor simulando escritura -->
+                                    <div id="composeBody1" class="hidden">
+                                        <p>Hi!</p>
+                                        <p class="mt-2">Emily and I are ready to buy our first home in <strong>Austin</strong>. Combined income ~$165K, credit scores 740+, and we can put <strong>10% down</strong> (~$45K saved).</p>
+                                        <p class="mt-2">We're targeting homes around <strong>$425–450K</strong>, ideally 3 bed / 2 bath near good schools. We'd like a <strong>30-year fixed</strong> with predictable payments and help understanding PMI and closing costs.</p>
+                                        <p class="mt-3">We need to <strong>close by mid-September</strong> — can Cumulus pre-approve us and recommend a conventional loan that fits?</p>
+                                    </div>
+                                </div>
+                                <div class="px-4 py-3 bg-gray-50 flex items-center justify-between border-t border-gray-100">
+                                    <button id="sendBtn1" class="bg-[#0b57d0] hover:bg-[#0842a0] text-white px-6 py-2 rounded-full font-medium text-sm transition shadow-sm mr-2 cursor-pointer">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 2: PREGUNTA ENVIADA -->
+                    <div class="email-item pt-4" id="email2">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold text-lg shrink-0">S</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Marcus Thompson <span class="text-xs font-normal text-gray-500">&lt;marcus.thompson@gmail.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs email-ts"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pl-0 md:pl-12 mt-2 pb-6 border-b border-gray-100">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>Hi!</p>
+                                <p class="mt-2">Emily and I are ready to buy our first home in <strong>Austin</strong>. Combined income ~$165K, credit scores 740+, and we can put <strong>10% down</strong> (~$45K saved).</p>
+                                <p class="mt-2">We're targeting homes around <strong>$425–450K</strong>, ideally 3 bed / 2 bath near good schools. We'd like a <strong>30-year fixed</strong> with predictable payments and help understanding PMI and closing costs.</p>
+                                <p class="mt-3">We need to <strong>close by mid-September</strong> — can Cumulus pre-approve us and recommend a conventional loan that fits?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 3: RESPUESTA IA Cumulus CON OPCIONES POR EDADES -->
+                    <div class="email-item pt-4" id="email3">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 border border-gray-200 rounded-full bg-[#0B3D5C] flex items-center justify-center shrink-0">
+                                <span class="text-white font-bold text-xs">P</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Cumulus Agentforce <span class="text-xs font-normal text-gray-500">&lt;assistant@cumulusfinserv.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs email-ts"></span>
+                                        <i id="replyIcon2" class="fa-solid fa-reply cursor-pointer hover:text-gray-700" title="Reply"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pl-0 md:pl-12 mt-2 pb-6 border-b border-gray-100 relative">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>Hi Marcus! I understand — first-time buyers in Austin need clarity on <strong>loan types</strong>, not a specific listing. Cumulus is your lender; you choose the home later.</p>
+                                
+                                <p class="mt-3">Based on your profile ($165K income, 740+ scores, 10% down, close by September), here are <strong>four programs</strong> we can pre-qualify you for — each with different down payment, PMI, and rate structure:</p>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4 mb-2">
+                                    <div class="bg-white border border-gray-200 hover:border-[#00A3A1] rounded-xl overflow-hidden shadow-sm flex flex-col">
+                                        <img src="assets/loan-conventional.jpg" alt="" class="h-28 w-full object-cover">
+                                        <div class="p-4 flex-1">
+                                            <h4 class="font-bold text-[#0B3D5C] text-[14px]">Conventional 30-Year Fixed</h4>
+                                            <p class="text-[11px] text-[#00A3A1] font-bold uppercase mt-1">Most popular · first-time buyers</p>
+                                            <p class="text-[12px] text-gray-700 mt-2">10–20% down · Est. rates from <strong>6.25% APR</strong> · No upfront property required.</p>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white border border-gray-200 hover:border-[#00A3A1] rounded-xl overflow-hidden shadow-sm flex flex-col">
+                                        <img src="assets/loan-fha.jpg" alt="" class="h-28 w-full object-cover">
+                                        <div class="p-4 flex-1">
+                                            <h4 class="font-bold text-[#0B3D5C] text-[14px]">FHA Loan</h4>
+                                            <p class="text-[11px] text-[#00A3A1] font-bold uppercase mt-1">Lower down payment</p>
+                                            <p class="text-[12px] text-gray-700 mt-2">As low as <strong>3.5% down</strong> · Flexible credit · Mortgage insurance applies.</p>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white border border-gray-200 hover:border-[#00A3A1] rounded-xl overflow-hidden shadow-sm flex flex-col">
+                                        <img src="assets/loan-homeready.jpg" alt="" class="h-28 w-full object-cover">
+                                        <div class="p-4 flex-1">
+                                            <h4 class="font-bold text-[#0B3D5C] text-[14px]">Cumulus HomeReady</h4>
+                                            <p class="text-[11px] text-[#00A3A1] font-bold uppercase mt-1">3% down · income limits</p>
+                                            <p class="text-[12px] text-gray-700 mt-2">Conventional with reduced MI · Good if you want to preserve cash for closing costs.</p>
+                                        </div>
+                                    </div>
+                                    <div class="bg-white border border-gray-200 hover:border-[#00A3A1] rounded-xl overflow-hidden shadow-sm flex flex-col">
+                                        <img src="assets/loan-arm.jpg" alt="" class="h-28 w-full object-cover">
+                                        <div class="p-4 flex-1">
+                                            <h4 class="font-bold text-[#0B3D5C] text-[14px]">5/1 Adjustable Rate (ARM)</h4>
+                                            <p class="text-[11px] text-[#00A3A1] font-bold uppercase mt-1">Lower initial payment</p>
+                                            <p class="text-[12px] text-gray-700 mt-2">Fixed for 5 years, then adjusts · Worth comparing if you may relocate within 7 years.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p class="mt-2 font-semibold text-[#0B3D5C]">Reply with the program you want to explore — then we’ll open your personalized hub on cumulusfinserv.com (calculators, checklists, rate guides).</p>
+                            </div>
+                            
+                            <div class="mt-4 flex gap-3" id="replyArea2">
+                                <button id="replyBtn2" class="border border-gray-300 rounded-full px-6 py-2 text-[#444746] font-medium text-[14px] hover:bg-[#f1f3f4] transition flex items-center gap-2 cursor-pointer shadow-sm">
+                                    <i class="fa-solid fa-reply"></i> Reply
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COMPOSE 2: SARAH ELIGE Y PREGUNTA POR ALOJAMIENTO/DEPORTE -->
+                    <div class="email-item pt-4" id="compose2">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold text-lg shrink-0 z-10 shadow-sm">S</div>
+                            <div class="flex-1 border border-gray-200 rounded-xl shadow-lg bg-white overflow-hidden flex flex-col relative mt-1">
+                                <div class="px-4 py-2 border-b border-gray-100 flex items-center text-[13px] text-gray-500 bg-gray-50">
+                                    <i class="fa-solid fa-reply mr-2 text-gray-400"></i>
+                                    <span class="mr-2">To:</span>
+                                    <span class="bg-white px-2 py-0.5 rounded-md border border-gray-200 text-gray-700 flex items-center gap-1 shadow-sm">Cumulus Agentforce <i class="fa-solid fa-xmark text-[10px] ml-1"></i></span>
+                                </div>
+                                <div class="p-5 text-[14px] text-[#202124] min-h-[100px] outline-none bg-white leading-relaxed cursor-text" contenteditable="false">
+                                    <div id="composeBody2" class="hidden">
+                                        <p>We'd like to start with the <strong>Conventional 30-Year Fixed</strong> — 10% down for now.</p>
+                                        <p class="mt-2">Can you explain <strong>PMI with 10% down</strong> and typical <strong>closing costs</strong> in Texas?</p>
+                                        <p class="mt-2">We'll probably use the <strong>mortgage center on your site</strong> this week to run the calculator — not looking to pick a home by email.</p>
+                                    </div>
+                                </div>
+                                <div class="px-4 py-3 bg-gray-50 flex items-center justify-between border-t border-gray-100">
+                                    <button id="sendBtn2" class="bg-[#0b57d0] hover:bg-[#0842a0] text-white px-6 py-2 rounded-full font-medium text-sm transition shadow-sm mr-2 cursor-pointer">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 4: PREGUNTA ENVIADA -->
+                    <div class="email-item pt-4" id="email4">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold text-lg shrink-0">S</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Marcus Thompson <span class="text-xs font-normal text-gray-500">&lt;marcus.thompson@gmail.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs email-ts"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pl-0 md:pl-12 mt-2 pb-6 border-b border-gray-100">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>We'd like to start with the <strong>Conventional 30-Year Fixed</strong> — it fits our plan (10% down now, maybe 20% if we wait).</p>
+                                <p class="mt-2">Can you explain <strong>PMI with 10% down</strong> and typical <strong>closing costs</strong> in Texas?</p>
+                                <p class="mt-2">We'll probably use the <strong>mortgage center on your site</strong> this week to run the calculator — not looking to pick a home by email.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 4.1: RESPUESTA IA (RESUELVE DUDAS Y PREGUNTA POR FECHAS/RÉGIMEN) -->
+                    <div class="email-item pt-4" id="email4_1">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 border border-gray-200 rounded-full bg-[#0B3D5C] flex items-center justify-center shrink-0">
+                                <span class="text-white font-bold text-xs">P</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Cumulus Agentforce <span class="text-xs font-normal text-gray-500">&lt;assistant@cumulusfinserv.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs email-ts"></span>
+                                        <i id="replyIcon4_1" class="fa-solid fa-reply cursor-pointer hover:text-gray-700" title="Reply"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pl-0 md:pl-12 mt-2 pb-6 border-b border-gray-100 relative">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>Very common doubts with an easy solution, Marcus.</p>
+                                
+                                <ul class="mt-3 space-y-3">
+                                    <li><i class="fa-solid fa-percent text-[#00A3A1] w-5"></i> <strong>PMI:</strong> With <strong>10% down</strong>, PMI applies until you reach ~20% equity. You can request removal later, or add a <strong>PMI buyout</strong> at closing.</li>
+                                    <li><i class="fa-solid fa-file-invoice-dollar text-[#00A3A1] w-5"></i> <strong>Closing costs:</strong> Typical range <strong>$8–12K</strong> in Texas. Cumulus Premier may match up to <strong>$3,500</strong> in seller credits on APP-2847.</li>
+                                </ul>
+
+                                <p class="mt-4">To finalize your Loan Estimate I need two details:</p>
+
+                                <div class="mt-4 p-5 bg-[#f0f9f8] border border-[#b8e6e3] rounded-xl shadow-sm">
+                                    <p class="mb-3 text-[#0B3D5C]"><strong>1. Down payment:</strong> Confirm <strong>10%</strong> (~$42.5K) or <strong>20%</strong> (~$85K) scenario?</p>
+                                    <p class="text-[#0B3D5C]"><strong>2. Target closing:</strong> When do you need keys? (You mentioned <strong>mid-September</strong>.)</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex gap-3" id="replyArea4_1">
+                                <button id="replyBtn4_1" class="border border-gray-300 rounded-full px-6 py-2 text-[#444746] font-medium text-[14px] hover:bg-[#f1f3f4] transition flex items-center gap-2 cursor-pointer shadow-sm">
+                                    <i class="fa-solid fa-reply"></i> Reply
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COMPOSE 2.5: SARAH RESPONDE FECHAS Y RÉGIMEN -->
+                    <div class="email-item pt-4" id="compose2_5">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold text-lg shrink-0 z-10 shadow-sm">S</div>
+                            <div class="flex-1 border border-gray-200 rounded-xl shadow-lg bg-white overflow-hidden flex flex-col relative mt-1">
+                                <div class="px-4 py-2 border-b border-gray-100 flex items-center text-[13px] text-gray-500 bg-gray-50">
+                                    <i class="fa-solid fa-reply mr-2 text-gray-400"></i>
+                                    <span class="mr-2">To:</span>
+                                    <span class="bg-white px-2 py-0.5 rounded-md border border-gray-200 text-gray-700 flex items-center gap-1 shadow-sm">Cumulus Agentforce <i class="fa-solid fa-xmark text-[10px] ml-1"></i></span>
+                                </div>
+                                <div class="p-5 text-[14px] text-[#202124] min-h-[80px] outline-none bg-white leading-relaxed cursor-text" contenteditable="false">
+                                    <div id="composeBody2_5" class="hidden">
+                                        <p>PMI explanation helps — we'll plan for 10% down and refinance/remove PMI when we hit 20% equity.</p>
+                                        <p class="mt-2">Let's use a <strong>20% down</strong> scenario for the estimate and target closing <strong>September 15th</strong>.</p>
+                                        <p class="mt-2">We'll log into the <strong>mortgage center</strong> this week — 10% down, closing target mid-September.</p>
+                                    </div>
+                                </div>
+                                <div class="px-4 py-3 bg-gray-50 flex items-center justify-between border-t border-gray-100">
+                                    <button id="sendBtn2_5" class="bg-[#0b57d0] hover:bg-[#0842a0] text-white px-6 py-2 rounded-full font-medium text-sm transition shadow-sm mr-2 cursor-pointer">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 4.2: RESPUESTA FECHAS ENVIADA -->
+                    <div class="email-item pt-4" id="email4_2">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold text-lg shrink-0">S</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Marcus Thompson <span class="text-xs font-normal text-gray-500">&lt;marcus.thompson@gmail.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs email-ts"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pl-0 md:pl-12 mt-2 pb-6 border-b border-gray-100">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>PMI explanation helps — we'll plan for 10% down and refinance/remove PMI when we hit 20% equity.</p>
+                                <p class="mt-2">Let's use a <strong>20% down</strong> scenario for the estimate and target closing <strong>September 15th</strong>.</p>
+                                <p class="mt-2">Target closing around <strong>September 15</strong> — we'll explore your site when we have an evening to sit down together.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 4.3: RESPUESTA IA (UPSELLING + DESCUENTO APLICADO) -->
+                    <div class="email-item pt-4" id="email4_3">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 border border-gray-200 rounded-full bg-[#0B3D5C] flex items-center justify-center shrink-0">
+                                <span class="text-white font-bold text-xs">P</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Cumulus Agentforce <span class="text-xs font-normal text-gray-500">&lt;assistant@cumulusfinserv.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs email-ts"></span>
+                                        <i id="replyIcon4_3" class="fa-solid fa-reply cursor-pointer hover:text-gray-700" title="Reply"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pl-0 md:pl-12 mt-2 pb-6 border-b border-gray-100 relative">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>Perfect — <strong>Conventional 30-Year Fixed</strong> is noted on <strong>APP-2847</strong>.</p>
+                                <ul class="mt-3 space-y-2 text-[13px]">
+                                    <li><strong>PMI (10% down):</strong> Usually required until ~20% equity; you can remove it later with appraisal or paydown.</li>
+                                    <li><strong>Closing costs (TX):</strong> Often <strong>$8–12K</strong>; Premier clients may qualify for assistance when you apply.</li>
+                                </ul>
+                                <p class="mt-4">Everything we&apos;ve covered is saved on <strong>APP-2847</strong>. You can keep discussing right here by email, or continue anytime in the <strong>Mortgage Center</strong> on the web.</p>
+                                <p class="mt-5 text-center">
+                                    <a href="agenticwebCumulusEN.html" target="_blank" rel="noopener" id="viewWebBtn">
+                                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                        Open Mortgage Center
+                                    </a>
+                                </p>
+                                <p class="mt-3 text-[11px] text-gray-500 text-center">Opens your personalized hub in a new tab · Conventional 30-yr on file</p>
+                            </div>
+                            
+                            <div class="mt-4 flex gap-3" id="replyArea4_3">
+                                <button id="replyBtn4_3" class="border border-gray-300 rounded-full px-6 py-2 text-[#444746] font-medium text-[14px] hover:bg-[#f1f3f4] transition flex items-center gap-2 cursor-pointer shadow-sm">
+                                    <i class="fa-solid fa-reply"></i> Reply
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COMPOSE 2.7: SARAH DUDA DE LOS ANCILLARIES -->
+                    <div class="email-item pt-4" id="compose2_7">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold text-lg shrink-0 z-10 shadow-sm">S</div>
+                            <div class="flex-1 border border-gray-200 rounded-xl shadow-lg bg-white overflow-hidden flex flex-col relative mt-1">
+                                <div class="px-4 py-2 border-b border-gray-100 flex items-center text-[13px] text-gray-500 bg-gray-50">
+                                    <i class="fa-solid fa-reply mr-2 text-gray-400"></i>
+                                    <span class="mr-2">To:</span>
+                                    <span class="bg-white px-2 py-0.5 rounded-md border border-gray-200 text-gray-700 flex items-center gap-1 shadow-sm">Cumulus Agentforce <i class="fa-solid fa-xmark text-[10px] ml-1"></i></span>
+                                </div>
+                                <div class="p-5 text-[14px] text-[#202124] min-h-[80px] outline-none bg-white leading-relaxed cursor-text" contenteditable="false">
+                                    <div id="composeBody2_7" class="hidden">
+                                        <p>It sounds phenomenal, but the truth is I have some doubts before confirming everything.</p>
+                                        <p class="mt-2">The <strong>PMI buyout</strong> is interesting — what's the one-time cost vs. monthly PMI?</p>
+                                        <p class="mt-2">And for <strong>closing cost assistance</strong>, which line items on the Loan Estimate would it apply to?</p>
+                                    </div>
+                                </div>
+                                <div class="px-4 py-3 bg-gray-50 flex items-center justify-between border-t border-gray-100">
+                                    <button id="sendBtn2_7" class="bg-[#0b57d0] hover:bg-[#0842a0] text-white px-6 py-2 rounded-full font-medium text-sm transition shadow-sm mr-2 cursor-pointer">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 4.4: DUDAS ENVIADAS -->
+                    <div class="email-item pt-4" id="email4_4">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold text-lg shrink-0">S</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Marcus Thompson <span class="text-xs font-normal text-gray-500">&lt;marcus.thompson@gmail.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs">2:45 PM (10 minutes ago)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pl-0 md:pl-12 mt-2 pb-6 border-b border-gray-100">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>It sounds phenomenal, but the truth is I have some doubts before confirming everything.</p>
+                                <p class="mt-2">The <strong>PMI buyout</strong> is interesting — what's the one-time cost vs. monthly PMI?</p>
+                                <p class="mt-2">And for <strong>closing cost assistance</strong>, which line items on the Loan Estimate would it apply to?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 4.5: IA PROPONE REUNIÓN CON EXPERTO -->
+                    <div class="email-item pt-4" id="email4_5">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 border border-gray-200 rounded-full bg-[#0B3D5C] flex items-center justify-center shrink-0">
+                                <span class="text-white font-bold text-xs">P</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Cumulus Agentforce <span class="text-xs font-normal text-gray-500">&lt;assistant@cumulusfinserv.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs">2:46 PM (9 minutes ago)</span>
+                                        <i id="replyIcon4_5" class="fa-solid fa-reply cursor-pointer hover:text-gray-700" title="Reply"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pl-0 md:pl-12 mt-2 pb-6 border-b border-gray-100 relative">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>It's completely normal that you have those doubts, Marcus! Being such an important trip for the 5 of you, we want you to be 100% sure of every detail. There's no rush to decide right now.</p>
+
+                                <p class="mt-4">To make the most of the destination and resolve these questions live, there is nothing better than a local expert. I have checked availability with Marcos, our advisor specialized in home loans.</p>
+                                
+                                <p class="mt-2">In a brief Google Meet he will walk through your <strong>Loan Estimate</strong>, explain PMI buyout vs. monthly PMI, and answer questions on <strong>closing disclosure</strong> line items.</p>
+                                
+                                <p class="mt-4 font-semibold text-[#0B3D5C]">These are the slots he has available this week. Shall I book one for you to talk to him?</p>
+
+                                <div class="mt-3 flex gap-3 flex-wrap">
+                                    <div class="border border-[#00A3A1] bg-white text-[#0B3D5C] px-4 py-2 rounded-md text-[13px] font-medium hover:bg-[#f0f9f8] cursor-pointer transition flex items-center gap-2">
+                                        <i class="fa-regular fa-calendar text-[#00A3A1]"></i> Tomorrow, 6:00 PM
+                                    </div>
+                                    <div class="border border-[#00A3A1] bg-white text-[#0B3D5C] px-4 py-2 rounded-md text-[13px] font-medium hover:bg-[#f0f9f8] cursor-pointer transition flex items-center gap-2">
+                                        <i class="fa-regular fa-calendar text-[#00A3A1]"></i> Thursday, 10:00 AM
+                                    </div>
+                                    <div class="border border-[#00A3A1] bg-white text-[#0B3D5C] px-4 py-2 rounded-md text-[13px] font-medium hover:bg-[#f0f9f8] cursor-pointer transition flex items-center gap-2">
+                                        <i class="fa-regular fa-calendar text-[#00A3A1]"></i> Thursday, 4:30 PM
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 flex gap-3" id="replyArea4_5">
+                                <button id="replyBtn4_5" class="border border-gray-300 rounded-full px-6 py-2 text-[#444746] font-medium text-[14px] hover:bg-[#f1f3f4] transition flex items-center gap-2 cursor-pointer shadow-sm">
+                                    <i class="fa-solid fa-reply"></i> Reply
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COMPOSE 2.8: SARAH ACEPTA LA REUNIÓN -->
+                    <div class="email-item pt-4" id="compose2_8">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold text-lg shrink-0 z-10 shadow-sm">S</div>
+                            <div class="flex-1 border border-gray-200 rounded-xl shadow-lg bg-white overflow-hidden flex flex-col relative mt-1">
+                                <div class="px-4 py-2 border-b border-gray-100 flex items-center text-[13px] text-gray-500 bg-gray-50">
+                                    <i class="fa-solid fa-reply mr-2 text-gray-400"></i>
+                                    <span class="mr-2">To:</span>
+                                    <span class="bg-white px-2 py-0.5 rounded-md border border-gray-200 text-gray-700 flex items-center gap-1 shadow-sm">Cumulus Agentforce <i class="fa-solid fa-xmark text-[10px] ml-1"></i></span>
+                                </div>
+                                <div class="p-5 text-[14px] text-[#202124] min-h-[80px] outline-none bg-white leading-relaxed cursor-text" contenteditable="false">
+                                    <div id="composeBody2_8" class="hidden">
+                                        <p>Ah, that sounds like a fantastic idea!</p>
+                                        <p class="mt-2">Talking to someone who knows the loan file in detail and can show us everything on video will help us a lot to decide which extras interest us the most. The slot <strong>tomorrow at 6:00 PM</strong> works great for us.</p>
+                                    </div>
+                                </div>
+                                <div class="px-4 py-3 bg-gray-50 flex items-center justify-between border-t border-gray-100">
+                                    <button id="sendBtn2_8" class="bg-[#0b57d0] hover:bg-[#0842a0] text-white px-6 py-2 rounded-full font-medium text-sm transition shadow-sm mr-2 cursor-pointer">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 4.6: CONFIRMACIÓN DE REUNIÓN ENVIADA -->
+                    <div class="email-item pt-4" id="email4_6">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold text-lg shrink-0">S</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Marcus Thompson <span class="text-xs font-normal text-gray-500">&lt;marcus.thompson@gmail.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs">2:48 PM (7 minutes ago)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pl-0 md:pl-12 mt-2 pb-6 border-b border-gray-100">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>Ah, that sounds like a fantastic idea!</p>
+                                <p class="mt-2">Talking to someone who knows the loan file in detail and can show us everything on video will help us a lot to decide which extras interest us the most. The slot <strong>tomorrow at 6:00 PM</strong> works great for us.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 5: IA ENVÍA RESUMEN BORRADOR Y PIDE PERMISO WHATSAPP -->
+                    <div class="email-item pt-4" id="email5">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 border border-gray-200 rounded-full bg-[#0B3D5C] flex items-center justify-center shrink-0">
+                                <span class="text-white font-bold text-xs">P</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Cumulus Agentforce <span class="text-xs font-normal text-gray-500">&lt;assistant@cumulusfinserv.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs">2:50 PM (5 minutes ago)</span>
+                                        <i id="replyIcon5" class="fa-solid fa-reply cursor-pointer hover:text-gray-700" title="Reply"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pl-0 md:pl-12 mt-2 pb-6 border-b border-gray-100 relative">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>Great, Marcus! 🗓️ <strong>I have scheduled your video call for tomorrow at 6:00 PM.</strong> I will send you the Google Meet invitation in a separate email.</p>
+                                
+                                <p class="mt-3">To get some work done ahead of the meeting, I've prepared a first draft with your dates and pre-selected extras. This way you'll have a base to work on and outline the details with Marcos.</p>
+
+                                <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 my-5 max-w-lg">
+                                    <div class="flex justify-between items-start border-b border-gray-200 pb-3 mb-3">
+                                        <div>
+                                            <p class="font-bold text-[#0B3D5C] text-lg">742 Maple Street · Austin, TX</p>
+                                            <p class="text-xs text-[#00A3A1] uppercase font-bold tracking-widest mt-1">Family Special</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex justify-between items-center mb-2">
+                                        <p class="text-sm">Dates & Guests</p>
+                                        <p class="text-sm font-semibold text-right">August 10th to 17th (7 Nights)<br>2 Adults, 3 Children (16, 14, 4)</p>
+                                    </div>
+                                    <div class="flex justify-between items-center mb-2 text-gray-600">
+                                        <p class="text-sm">Room</p>
+                                        <p class="text-sm">Premium Family (Connected)</p>
+                                    </div>
+                                    <div class="flex justify-between items-center mb-4 text-gray-600">
+                                        <p class="text-sm">Board & Extras</p>
+                                        <p class="text-sm text-right">PMI Buyout<br>+ Closing assist</p>
+                                    </div>
+                                    
+                                    <button class="w-full bg-[#0B3D5C] hover:bg-[#145070] text-white font-bold py-3 rounded-lg flex justify-center items-center gap-2 transition cursor-pointer text-sm tracking-wide">
+                                        VIEW BUDGET
+                                    </button>
+                                </div>
+
+                                <p class="mt-4">To make tomorrow's video call as smooth as possible, do you confirm permission to contact you on the WhatsApp on your Cumulus Premier profile (+1 512-***-****)? Your loan officer can send a reminder with the Meet link and you can reschedule there if needed.</p>
+                                
+                                <div class="mt-4 p-5 bg-[#f0f9f8] border border-[#b8e6e3] rounded-xl shadow-sm flex items-start gap-3">
+                                    <i class="fa-brands fa-whatsapp text-[#16a34a] text-xl mt-1"></i>
+                                    <div>
+                                        <strong class="text-[#0B3D5C] text-[15px]">WhatsApp Contact</strong>
+                                        <p class="mt-1 text-[13px] text-[#0B3D5C]">Reply to this email with a simple "OK" to give us your consent.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BOTÓN REPLY DE EMAIL 5 -->
+                            <div class="mt-4 flex gap-3" id="replyArea5">
+                                <button id="replyBtn5" class="border border-gray-300 rounded-full px-6 py-2 text-[#444746] font-medium text-[14px] hover:bg-[#f1f3f4] transition flex items-center gap-2 cursor-pointer shadow-sm">
+                                    <i class="fa-solid fa-reply"></i> Reply
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- COMPOSE 3: SARAH DA EL OK A WHATSAPP -->
+                    <div class="email-item pt-4" id="compose3">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold text-lg shrink-0 z-10 shadow-sm">S</div>
+                            <div class="flex-1 border border-gray-200 rounded-xl shadow-lg bg-white overflow-hidden flex flex-col relative mt-1">
+                                <div class="px-4 py-2 border-b border-gray-100 flex items-center text-[13px] text-gray-500 bg-gray-50">
+                                    <i class="fa-solid fa-reply mr-2 text-gray-400"></i>
+                                    <span class="mr-2">To:</span>
+                                    <span class="bg-white px-2 py-0.5 rounded-md border border-gray-200 text-gray-700 flex items-center gap-1 shadow-sm">Cumulus Agentforce <i class="fa-solid fa-xmark text-[10px] ml-1"></i></span>
+                                </div>
+                                <div class="p-5 text-[14px] text-[#202124] min-h-[80px] outline-none bg-white leading-relaxed cursor-text" contenteditable="false">
+                                    <div id="composeBody3" class="hidden">
+                                        <p>Everything looks great!</p>
+                                        <p class="mt-2">OK, you have my consent to text me on WhatsApp. I find it super practical to have the link and the reminder there just in case. We'll talk tomorrow with Marcos to finish closing everything.</p>
+                                    </div>
+                                </div>
+                                <div class="px-4 py-3 bg-gray-50 flex items-center justify-between border-t border-gray-100">
+                                    <button id="sendBtn3" class="bg-[#0b57d0] hover:bg-[#0842a0] text-white px-6 py-2 rounded-full font-medium text-sm transition shadow-sm mr-2 cursor-pointer">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 7: SARAH OK WHATSAPP ENVIADO -->
+                    <div class="email-item pt-4" id="email7">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 bg-blue-600 rounded-full text-white flex items-center justify-center font-bold text-lg shrink-0">S</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Marcus Thompson <span class="text-xs font-normal text-gray-500">&lt;marcus.thompson@gmail.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs">2:52 PM (1 minute ago)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pl-0 md:pl-12 mt-2 pb-6 border-b border-gray-100">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>Everything looks great!</p>
+                                <p class="mt-2">OK, you have my consent to text me on WhatsApp. I find it super practical to have the link and the reminder there just in case. We'll talk tomorrow with Marcos to finish closing everything.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMAIL 8: IA DESPEDIDA FINAL -->
+                    <div class="email-item pt-4" id="email8">
+                        <div class="flex items-start gap-3 mb-2">
+                            <div class="w-10 h-10 border border-gray-200 rounded-full bg-[#0B3D5C] flex items-center justify-center shrink-0">
+                                <span class="text-white font-bold text-xs">P</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[14px] text-[#202124]">Cumulus Agentforce <span class="text-xs font-normal text-gray-500">&lt;assistant@cumulusfinserv.com&gt;</span></span>
+                                    </div>
+                                    <div class="flex items-center gap-3 text-gray-500">
+                                        <span class="text-xs">2:53 PM (just now)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pl-0 md:pl-12 mt-2 pb-12 border-b-0 border-gray-100 relative">
+                            <div class="text-[14px] text-[#202124] leading-relaxed max-w-3xl">
+                                <p>Channel successfully activated, Marcus! 📱</p>
+                                
+                                <p class="mt-2">Marcos will text you tomorrow on WhatsApp with the link and the video call reminder.</p>
+                                <p class="mt-2">It has been a pleasure helping you organize this first proposal. See you very soon. Remember: <strong>Live up to more.</strong></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BANNER GMAIL DE NUEVO MENSAJE (Oculto por defecto) -->
+                    <div id="newMessageBanner" class="message-banner">
+                        <span>New Message from <span id="bannerSenderName">Cumulus Agentforce</span></span>
+                        <span class="banner-link" id="showNewMessageBtn">Show</span>
+                        <span class="banner-link" id="ignoreNewMessageBtn">Ignore</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE SIMULACIÓN -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const AI_REPLY_DELAY_MS = 2500;
+            const SARAH_TYPING_BASE_MS = 28; // ~web chat cadence (15–30ms per char)
+
+            // Dynamic timestamps — revert: restore static text in .email-ts spans and remove this block + hooks below
+            const TS_LOCALE = 'en-US';
+            const CAMPAIGN_HOUR = 9;
+            const CAMPAIGN_MINUTE = 55;
+            let lastSarahSentAt = null;
+
+            function getCampaignDate() {
+                const d = new Date();
+                d.setHours(CAMPAIGN_HOUR, CAMPAIGN_MINUTE, 0, 0);
+                if (d > new Date()) d.setDate(d.getDate() - 1);
+                return d;
+            }
+
+            function formatEmailTime(date) {
+                return date.toLocaleTimeString(TS_LOCALE, { hour: 'numeric', minute: '2-digit', hour12: true });
+            }
+
+            function formatRelativeAgo(past, now = new Date()) {
+                const diffMin = Math.floor((now - past) / 60000);
+                if (diffMin < 1) return 'just now';
+                if (diffMin === 1) return '1 minute ago';
+                if (diffMin < 60) return `${diffMin} minutes ago`;
+                const diffHr = Math.floor(diffMin / 60);
+                if (diffHr === 1) return '1 hour ago';
+                return `${diffHr} hours ago`;
+            }
+
+            function setEmailTimestamp(emailId, date) {
+                const el = document.querySelector(`#${emailId} .email-ts`);
+                if (!el || !date) return;
+                el.textContent = `${formatEmailTime(date)} (${formatRelativeAgo(date)})`;
+            }
+
+            setTimeout(() => iniciarFlujo(), 600);
+
+            // Preserve compose HTML before any typing animation mutates the DOM
+            ['composeBody1', 'composeBody2', 'composeBody2_5'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.dataset.originalHtml = el.innerHTML.trim();
+            });
+
+            // Función para simular escritura real (Marcus — slower, human-like)
+            function typeHTML(el, html, speed, onComplete) {
+                // Limpiar espacios en blanco excesivos para no escribir "espacios invisibles"
+                html = html.replace(/\s+/g, ' ').replace(/>\s+</g, '><').trim();
+                el.innerHTML = '';
+                el.classList.remove('hidden');
+                let i = 0;
+                let currentHTML = '';
+                let timeoutId = null;
+                let isSkipped = false;
+                
+                // Any letter/key: fill the full draft instantly (does not send)
+                const skipTyping = (e) => {
+                    if (e.key === "Alt" || e.key === "Control" || e.key === "Shift" || e.key === "Meta" || e.key === "Enter") return;
+                    isSkipped = true;
+                    clearTimeout(timeoutId);
+                    el.innerHTML = html; // Mostrar todo el texto de golpe
+                    document.removeEventListener('keydown', skipTyping);
+                    
+                    // Hacer scroll hasta asegurar que se vea el bloque recién completado
+                    const container = document.getElementById('scrollContainer');
+                    if (container) {
+                        const rect = el.getBoundingClientRect();
+                        if (rect.bottom > window.innerHeight - 60) {
+                            container.scrollTop += (rect.bottom - window.innerHeight + 80);
+                        }
+                    }
+                    if (onComplete) onComplete();
+                };
+
+                // Escuchar pulsación de tecla para saltar la animación mientras dura
+                document.addEventListener('keydown', skipTyping);
+                
+                function type() {
+                    if (isSkipped) return; // Si el usuario ha saltado la animación, detener el bucle
+
+                    if (i < html.length) {
+                        let char = html.charAt(i);
+                        currentHTML += char;
+                        
+                        // Si es una etiqueta HTML (ej. <strong>), la añadimos entera de golpe para no romper el DOM
+                        if (char === '<') {
+                            let tagEnd = html.indexOf('>', i);
+                            if (tagEnd !== -1) {
+                                currentHTML += html.substring(i + 1, tagEnd + 1);
+                                i = tagEnd;
+                            }
+                        }
+                        
+                        el.innerHTML = currentHTML + '<span class="typing-cursor">|</span>';
+                        i++;
+                        
+                        // Scroll automático suave hacia abajo si el texto crece más allá de la pantalla
+                        const container = document.getElementById('scrollContainer');
+                        if (container) {
+                            const rect = el.getBoundingClientRect();
+                            if (rect.bottom > window.innerHeight - 60) {
+                                container.scrollTop += 25;
+                            }
+                        }
+
+                        // Velocidad base + aleatoriedad para parecer un humano tecleando (acelerado ~30%)
+                        timeoutId = setTimeout(type, speed + Math.random() * 18);
+                    } else {
+                        el.innerHTML = currentHTML; // Quitar el cursor al terminar
+                        document.removeEventListener('keydown', skipTyping); // Limpiar el listener
+                        if (onComplete) onComplete();
+                    }
+                }
+                type();
+            }
+
+            function iniciarFlujo() {
+                const delayMs = AI_REPLY_DELAY_MS;
+                // Demo ends at email4_3 (budget + upsells + VIEW DETAILS ON THE WEB)
+                const sequence = [
+                    { action: 'show', id: 'email1', type: 'auto', delay: 500 },
+                    { action: 'show', id: 'compose1', type: 'click', triggerBtn: 'replyBtn1', altTriggerBtn: 'replyIcon1', hideId: 'replyArea1' },
+                    { action: 'compose_type', targetId: 'composeBody1', hideId: 'compose1', showId: 'email2', sendBtn: 'sendBtn1' },
+
+                    { action: 'show', id: 'email3', type: 'ai_response', sender: 'Cumulus Agentforce' },
+                    { action: 'show', id: 'compose2', type: 'click', triggerBtn: 'replyBtn2', altTriggerBtn: 'replyIcon2', hideId: 'replyArea2' },
+                    { action: 'compose_type', targetId: 'composeBody2', hideId: 'compose2', showId: 'email4', sendBtn: 'sendBtn2' },
+
+                    { action: 'show', id: 'email4_1', type: 'ai_response', sender: 'Cumulus Agentforce' },
+                    { action: 'show', id: 'compose2_5', type: 'click', triggerBtn: 'replyBtn4_1', altTriggerBtn: 'replyIcon4_1', hideId: 'replyArea4_1' },
+                    { action: 'compose_type', targetId: 'composeBody2_5', hideId: 'compose2_5', showId: 'email4_2', sendBtn: 'sendBtn2_5' },
+
+                    { action: 'show', id: 'email4_3', type: 'ai_response', sender: 'Cumulus Agentforce', isFinal: true }
+                ];
+                
+                const container = document.getElementById('scrollContainer');
+                let currentStep = 0;
+
+                function animateIn(el) {
+                    el.classList.add('active'); 
+                    void el.offsetWidth; 
+                    el.classList.add('visible');
+                }
+
+                function scrollAfter(targetEl) {
+                    setTimeout(() => {
+                        const parentItem = targetEl.closest('.email-item') || targetEl;
+                        const topPos = parentItem.offsetTop - 70;
+                        container.scrollTo({ top: topPos, behavior: 'smooth' });
+                    }, 50);
+                }
+
+                function showNext() {
+                    if (currentStep >= sequence.length) return;
+                    
+                    const step = sequence[currentStep];
+                    let targetEl = null;
+
+                    if (step.action === 'show') {
+                        targetEl = document.getElementById(step.id);
+                        if (targetEl) {
+                            animateIn(targetEl);
+                            if (step.id === 'email1') setEmailTimestamp('email1', getCampaignDate());
+                        }
+                        
+                        if (step.hideId) {
+                            const hEl = document.getElementById(step.hideId);
+                            if (hEl) hEl.style.display = 'none';
+                        }
+                    } else if (step.action === 'replace') {
+                        const hideEl = document.getElementById(step.hideId);
+                        targetEl = document.getElementById(step.showId);
+                        
+                        if (hideEl) {
+                            hideEl.classList.remove('visible', 'active');
+                            hideEl.style.display = 'none'; 
+                        }
+                        if (targetEl) animateIn(targetEl);
+                    } else if (step.action === 'compose_type') {
+                        const contentEl = document.getElementById(step.targetId);
+                        const hideEl = document.getElementById(step.hideId);
+                        const showEl = document.getElementById(step.showId);
+                        const sendBtn = document.getElementById(step.sendBtn);
+
+                        const wireSendOnly = () => {
+                            if (!sendBtn || sendBtn.dataset.demoWired === 'true') return;
+                            sendBtn.dataset.demoWired = 'true';
+
+                            const onSend = () => {
+                                sendBtn.removeEventListener('click', onSend);
+                                sendBtn.dataset.demoWired = '';
+                                if (hideEl) {
+                                    hideEl.classList.remove('visible', 'active');
+                                    hideEl.style.display = 'none';
+                                }
+                                if (showEl) {
+                                    animateIn(showEl);
+                                    scrollAfter(showEl);
+                                    const sentAt = new Date();
+                                    if (showEl.id === 'email2' || showEl.id === 'email4' || showEl.id === 'email4_2') {
+                                        lastSarahSentAt = sentAt;
+                                        setEmailTimestamp(showEl.id, sentAt);
+                                    }
+                                }
+                                currentStep++;
+                                setupTriggerForCurrentStep();
+                            };
+                            sendBtn.addEventListener('click', onSend);
+                        };
+
+                        if (contentEl) {
+                            contentEl.classList.remove('hidden');
+                            if (!contentEl.dataset.typed) {
+                                contentEl.dataset.typed = 'true';
+                                const htmlContent = contentEl.dataset.originalHtml || contentEl.innerHTML;
+                                typeHTML(contentEl, htmlContent, SARAH_TYPING_BASE_MS, wireSendOnly);
+                                return;
+                            }
+                            wireSendOnly();
+                        }
+                        return;
+                    }
+
+                    if (targetEl) scrollAfter(targetEl);
+
+                    currentStep++;
+                    setupTriggerForCurrentStep();
+                }
+
+                // Función que muestra el Banner de "New Message" de Gmail
+                function triggerNewMessageAlert(step) {
+                    const banner = document.getElementById('newMessageBanner');
+                    const targetEl = document.getElementById(step.id);
+                    const senderName = step.sender || 'Cumulus Financial Services';
+
+                    document.getElementById('bannerSenderName').innerText = senderName;
+
+                    // Insertamos el banner justo antes del correo que se va a revelar
+                    targetEl.parentNode.insertBefore(banner, targetEl);
+
+                    // Lo mostramos con animación
+                    banner.style.display = 'flex';
+                    void banner.offsetWidth; // Reflow
+                    banner.classList.add('visible-banner');
+
+                    // Hacemos scroll suave para que el usuario vea la alerta amarilla
+                    setTimeout(() => {
+                        const topPos = banner.offsetTop - 70;
+                        container.scrollTo({ top: topPos, behavior: 'smooth' });
+                    }, 50);
+
+                    // Logica de los botones del banner
+                    const showBtn = document.getElementById('showNewMessageBtn');
+                    const ignoreBtn = document.getElementById('ignoreNewMessageBtn');
+
+                    const onShow = () => {
+                        banner.classList.remove('visible-banner');
+                        setTimeout(() => {
+                            banner.style.display = 'none';
+                            const agentOffsets = { email3: 1, email4_1: 2, email4_3: 2 };
+                            if (agentOffsets[step.id] && lastSarahSentAt) {
+                                const agentAt = new Date(lastSarahSentAt.getTime() + agentOffsets[step.id] * 60000);
+                                setEmailTimestamp(step.id, agentAt);
+                            } else if (step.id === 'email3' || step.id === 'email4_1' || step.id === 'email4_3') {
+                                setEmailTimestamp(step.id, new Date());
+                            }
+                            showNext();
+                            if (step.isFinal) {
+                                const webBtn = document.getElementById('viewWebBtn');
+                                if (webBtn) {
+                                    webBtn.classList.add('demo-highlight');
+                                    setTimeout(() => webBtn.scrollIntoView({ behavior: 'smooth', block: 'center' }), 400);
+                                }
+                            }
+                        }, 300);
+                        showBtn.removeEventListener('click', onShow);
+                        ignoreBtn.removeEventListener('click', onIgnore);
+                    };
+
+                    const onIgnore = () => {
+                        banner.classList.remove('visible-banner');
+                        setTimeout(() => banner.style.display = 'none', 300);
+                        showBtn.removeEventListener('click', onShow);
+                        ignoreBtn.removeEventListener('click', onIgnore);
+                    };
+
+                    showBtn.addEventListener('click', onShow);
+                    ignoreBtn.addEventListener('click', onIgnore);
+                }
+
+                function setupTriggerForCurrentStep() {
+                    if (currentStep >= sequence.length) return;
+
+                    const nextStep = sequence[currentStep];
+
+                    // Auto-start Marcus typing after compose opens; Send is manual (click only)
+                    if (nextStep.action === 'compose_type') {
+                        setTimeout(showNext, 350);
+                        return;
+                    }
+
+                    if (nextStep.type === 'auto') {
+                        setTimeout(showNext, nextStep.delay || 0);
+                    } 
+                    else if (nextStep.type === 'click') {
+                        const btn = document.getElementById(nextStep.triggerBtn);
+                        const altBtn = nextStep.altTriggerBtn ? document.getElementById(nextStep.altTriggerBtn) : null;
+                        
+                        const onClick = function() {
+                            if(btn) btn.removeEventListener('click', onClick);
+                            if(altBtn) altBtn.removeEventListener('click', onClick);
+                            showNext();
+                        };
+
+                        if (btn) btn.addEventListener('click', onClick);
+                        if (altBtn) altBtn.addEventListener('click', onClick);
+                    }
+                    else if (nextStep.type === 'ai_response') {
+                        setTimeout(() => triggerNewMessageAlert(nextStep), delayMs);
+                    }
+                }
+
+                // Iniciar máquina de estados
+                setupTriggerForCurrentStep();
+            }
+        });
+    </script>
+</body>
+</html>

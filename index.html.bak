@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Demo Cumulus — Hub de canales</title>
+  <link rel="icon" href="assets/cumulus-icon.png" type="image/png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: Montserrat, system-ui, sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-[#0B3D5C] text-white">
+  <header class="border-b border-white/10 bg-[#072a3f]/90">
+    <div class="max-w-3xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center gap-6">
+      <img src="assets/cumulus-logo.png" alt="Cumulus Financial Services" class="h-7 max-w-[120px] object-contain bg-white/95 rounded px-2 py-1">
+      <div class="text-center sm:text-left">
+        <h1 class="text-2xl font-bold tracking-tight">Demo omnicanal — Cumulus</h1>
+        <p class="text-teal-200/80 text-sm mt-1">Hipotecas · Agentforce · Data Cloud · Marketing Intelligence</p>
+        <p class="text-white/50 text-xs mt-2">Marca: <a href="https://cumulusfinserv.com/" class="text-[#7ee8e0] hover:underline" target="_blank" rel="noopener">cumulusfinserv.com</a> · Life simplified</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-6 py-10">
+    <p class="text-slate-200 text-sm mb-2">
+      Proyecto independiente de <strong class="text-white">palonia-demo</strong> — no modifica la demo de hotel.
+    </p>
+    <p class="text-slate-300 text-sm mb-8">
+      Historia: <strong>Marcus & Emily Thompson</strong> · caso <code class="text-[#7ee8e0] bg-white/10 px-1 rounded">APP-2847</code> ·
+      banco → programas de préstamo → web (páginas + calculadora) → WhatsApp (recap + <strong>asesor humano</strong>).
+      Personaliza según <code class="text-[#7ee8e0] bg-white/10 px-1 rounded">CUSTOMIZACION.md</code>.
+    </p>
+
+    <nav class="grid gap-4 sm:grid-cols-2" aria-label="Canales de demo">
+      <a href="agenticEmailCumulusEN.html" target="_blank" rel="noopener"
+         class="group block rounded-xl border border-white/10 bg-white/5 p-6 hover:border-[#00A3A1]/50 hover:bg-white/10 transition">
+        <span class="text-2xl" aria-hidden="true">✉️</span>
+        <h2 class="mt-3 text-lg font-semibold group-hover:text-[#7ee8e0]">Email</h2>
+        <p class="text-slate-300 text-sm mt-1">Campaña Path to Homeownership · pre-aprobación · enlace a la web</p>
+      </a>
+
+      <a href="agenticwebCumulusEN.html" target="_blank" rel="noopener"
+         class="group block rounded-xl border border-white/10 bg-white/5 p-6 hover:border-[#00A3A1]/50 hover:bg-white/10 transition">
+        <span class="text-2xl" aria-hidden="true">🌐</span>
+        <h2 class="mt-3 text-lg font-semibold group-hover:text-[#7ee8e0]">Web</h2>
+        <p class="text-slate-300 text-sm mt-1">Homepage hipotecas · recursos + Agentforce · sin carrito</p>
+      </a>
+
+      <a href="agenticWhatsappCumulusMortgageEN.html" target="_blank" rel="noopener"
+         class="group block rounded-xl border border-white/10 bg-white/5 p-6 hover:border-[#00A3A1]/50 hover:bg-white/10 transition">
+        <span class="text-2xl" aria-hidden="true">💬</span>
+        <h2 class="mt-3 text-lg font-semibold group-hover:text-[#7ee8e0]">WhatsApp</h2>
+        <p class="text-slate-300 text-sm mt-1">Recap · hablar con asesor humano (no cerrar hipoteca por WA)</p>
+      </a>
+
+      <a href="fichaclienteCumulusEN.html" target="_blank" rel="noopener"
+         class="group block rounded-xl border border-white/10 bg-white/5 p-6 hover:border-[#00A3A1]/50 hover:bg-white/10 transition">
+        <span class="text-2xl" aria-hidden="true">👤</span>
+        <h2 class="mt-3 text-lg font-semibold group-hover:text-[#7ee8e0]">Ficha cliente</h2>
+        <p class="text-slate-300 text-sm mt-1">Perfil 360 · journey Email → Web → WhatsApp</p>
+      </a>
+
+      <a href="marketingIntelligenceCumulusEN.html" target="_blank" rel="noopener"
+         class="group block rounded-xl border border-white/10 bg-white/5 p-6 hover:border-[#00A3A1]/50 hover:bg-white/10 transition sm:col-span-2 ring-1 ring-[#0176d3]/40">
+        <span class="text-2xl" aria-hidden="true">📊</span>
+        <h2 class="mt-3 text-lg font-semibold group-hover:text-[#7ee8e0]">Marketing Intelligence</h2>
+        <p class="text-slate-300 text-sm mt-1">SPA · Analytics + Attribution · campañas mortgage</p>
+      </a>
+    </nav>
+
+    <p class="text-slate-500 text-xs mt-10">
+      Servidor local: <code class="text-slate-400">python3 -m http.server 8081</code> en esta carpeta →
+      <code class="text-slate-400">http://localhost:8081/</code>
+    </p>
+  </main>
+</body>
+</html>

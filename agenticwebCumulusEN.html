@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cumulus — Personal Banking & Mortgages</title>
+    <link rel="icon" href="assets/cumulus-icon.png" type="image/x-icon">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { font-family: 'Montserrat', sans-serif; background-color: #f4f6f8; }
+        .cumulus-logo-sm { height: 24px; max-width: 100px; width: auto; object-fit: contain; object-position: left center; }
+        .chat-fab {
+            box-shadow: 0 8px 28px rgba(11, 61, 92, 0.35);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .chat-fab:hover { transform: scale(1.04); box-shadow: 0 12px 32px rgba(11, 61, 92, 0.45); }
+        .chat-panel {
+            box-shadow: 0 12px 48px rgba(11, 61, 92, 0.28);
+        }
+        .chat-backdrop { animation: fadeIn 0.2s ease-out forwards; }
+        .chat-textarea { resize: none; min-height: 44px; max-height: 150px; line-height: 1.5; }
+        .chip-btn {
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .chip-btn:hover:not(:disabled) { background: #f0f9f8; border-color: #00A3A1; }
+        .thinking-shimmer {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%);
+            background-size: 400% 100%;
+            animation: shimmer 1.15s ease-in-out infinite;
+        }
+        @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.45s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        .page-enter { animation: slideUp 0.5s ease-out forwards; }
+        .guide-card:hover { border-color: #00A3A1; box-shadow: 0 4px 16px rgba(0, 163, 161, 0.15); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const TYPING_BASE_MS = 28;
+        const TYPING_JITTER_MS = 18;
+        const AI_REPLY_DELAY_MS = 2500;
+        const CHAT_CONNECT_MS = 2000;
+
+        const AGENT_ICON = "assets/cumulus-icon.png";
+        const HERO_IMG = "assets/cumulus-hero-home.jpg";
+
+        const RESOURCES = [
+            { id: 'borrow_calc', title: 'How Much Can I Borrow?', desc: 'Calculate affordability and closing costs.', cta: 'CALCULATE', image: 'assets/mortgage-borrow.jpg' },
+            { id: 'checklist', title: 'New Homebuyer Checklist', desc: 'Step-by-step journey to your front door.', cta: 'GET THE CHECKLIST', image: 'assets/mortgage-checklist.jpg' },
+            { id: 'dos_donts', title: "The Do's & Don'ts", desc: 'Expert tips before you apply.', cta: 'READ MORE', image: 'assets/mortgage-dosdonts.jpg' },
+            { id: 'rates', title: 'Understand Interest Rates', desc: 'Fixed vs. ARM and promotional rates.', cta: 'LEARN MORE', image: 'assets/mortgage-rates.jpg' }
+        ];
+
+        const CHECKLIST_ITEMS = [
+            'Pull credit report & dispute errors',
+            'Gather W-2s, pay stubs (2 years)',
+            'Bank statements (2–3 months)',
+            'List debts & monthly obligations',
+            'Get pre-qualification letter (APP-2847)',
+            'Shop homeowners insurance quotes',
+            'Reserve earnest money in Premier checking'
+        ];
+
+        const DOS = ['Keep paying bills on time', 'Stay in your current job', 'Maintain stable bank balances', 'Ask before opening new credit'];
+        const DONTS = ['Don’t finance a car before closing', 'Don’t max out credit cards', 'Don’t move large cash without paper trail', 'Don’t change jobs mid-process'];
+
+        function BorrowCalculator({ profile }) {
+            const [income, setIncome] = useState(profile.income);
+            const [downPct, setDownPct] = useState(profile.downPct);
+            const [debts, setDebts] = useState(profile.debts);
+            const price = Math.round((income / 12) * 0.28 * 12 * 4.2 + downPct * 1000);
+            const downAmt = Math.round(price * (downPct / 100));
+            const loan = price - downAmt;
+            const piti = Math.round(loan * 0.0062 + price * 0.0012);
+            const closing = Math.round(price * 0.025);
+
+            return (
+                <div className="page-enter max-w-2xl mx-auto">
+                    <button type="button" onClick={profile.onBack} className="text-[13px] text-[#0B3D5C] font-semibold mb-4 hover:underline">
+                        <i className="fa-solid fa-arrow-left mr-2"></i>Back to mortgage resources
+                    </button>
+                    <h1 className="text-2xl font-light text-[#0B3D5C] mb-1">How Much Can I Borrow?</h1>
+                    <p className="text-sm text-gray-500 mb-6">Pre-filled from your APP-2847 profile · adjust to explore scenarios.</p>
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-5">
+                        <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase">Household income (annual)</label>
+                            <input type="range" min="80000" max="250000" step="5000" value={income} onChange={e => setIncome(+e.target.value)} className="w-full mt-2 accent-[#00A3A1]" />
+                            <p className="text-right font-bold text-[#0B3D5C]">${income.toLocaleString()}</p>
+                        </div>
+                        <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase">Down payment %</label>
+                            <input type="range" min="3" max="20" value={downPct} onChange={e => setDownPct(+e.target.value)} className="w-full mt-2 accent-[#00A3A1]" />
+                            <p className="text-right font-bold text-[#0B3D5C]">{downPct}%</p>
+                        </div>
+                        <div>
+                            <label className="text-[11px] font-bold text-gray-500 uppercase">Monthly debts</label>
+                            <input type="range" min="200" max="2500" step="50" value={debts} onChange={e => setDebts(+e.target.value)} className="w-full mt-2 accent-[#00A3A1]" />
+                            <p className="text-right font-bold text-[#0B3D5C]">${debts}/mo</p>
+                        </div>
+                        <div className="bg-[#f0f9f8] border border-[#b8e6e3] rounded-lg p-5 space-y-2">
+                            <div className="flex justify-between text-sm"><span>Estimated max price</span><strong className="text-[#0B3D5C]">${price.toLocaleString()}</strong></div>
+                            <div className="flex justify-between text-sm"><span>Loan amount</span><strong>${loan.toLocaleString()}</strong></div>
+                            <div className="flex justify-between text-sm"><span>Est. P&I + tax/ins.</span><strong>~${piti.toLocaleString()}/mo</strong></div>
+                            <div className="flex justify-between text-sm"><span>Est. closing costs</span><strong>~${closing.toLocaleString()}</strong></div>
+                            <p className="text-[10px] text-gray-500 pt-2 border-t border-[#b8e6e3]">Illustrative only — not a Loan Estimate. CUMULUS26 may reduce rate when you pre-qualify.</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function ResourceArticle({ id, onBack }) {
+            const res = RESOURCES.find(r => r.id === id);
+            if (id === 'borrow_calc') return <BorrowCalculator profile={{ income: 165000, downPct: 10, debts: 650, onBack }} />;
+
+            const bodies = {
+                checklist: (
+                    <ul className="space-y-3 mt-4">
+                        {CHECKLIST_ITEMS.map((item, i) => (
+                            <li key={i} className="flex gap-3 text-sm text-gray-700">
+                                <span className="w-6 h-6 rounded-full bg-[#00A3A1] text-white text-[11px] font-bold flex items-center justify-center shrink-0">{i + 1}</span>
+                                {item}
+                            </li>
+                        ))}
+                    </ul>
+                ),
+                dos_donts: (
+                    <div className="grid sm:grid-cols-2 gap-4 mt-4">
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <h3 className="font-bold text-green-800 text-sm mb-2">Do</h3>
+                            <ul className="text-sm text-gray-700 space-y-1">{DOS.map((d, i) => <li key={i}>✓ {d}</li>)}</ul>
+                        </div>
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <h3 className="font-bold text-red-800 text-sm mb-2">Don't</h3>
+                            <ul className="text-sm text-gray-700 space-y-1">{DONTS.map((d, i) => <li key={i}>✗ {d}</li>)}</ul>
+                        </div>
+                    </div>
+                ),
+                rates: (
+                    <div className="mt-4 space-y-4">
+                        <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+                            <thead className="bg-[#0B3D5C] text-white"><tr><th className="p-3 text-left">Product</th><th className="p-3 text-left">APR from*</th></tr></thead>
+                            <tbody className="bg-white">
+                                <tr className="border-t"><td className="p-3 font-medium">30-yr Fixed (Conventional)</td><td className="p-3">6.25%</td></tr>
+                                <tr className="border-t bg-[#f0f9f8]"><td className="p-3 font-medium">With CUMULUS26</td><td className="p-3 text-[#00A3A1] font-bold">6.00%</td></tr>
+                                <tr className="border-t"><td className="p-3">FHA</td><td className="p-3">6.45%</td></tr>
+                                <tr className="border-t"><td className="p-3">5/1 ARM</td><td className="p-3">5.85%</td></tr>
+                            </tbody>
+                        </table>
+                        <p className="text-xs text-gray-500">*Rates illustrative · APP-2847 · subject to credit approval</p>
+                    </div>
+                )
+            };
+
+            return (
+                <div className="page-enter max-w-3xl mx-auto">
+                    <button type="button" onClick={onBack} className="text-[13px] text-[#0B3D5C] font-semibold mb-4 hover:underline">
+                        <i className="fa-solid fa-arrow-left mr-2"></i>Back to mortgage resources
+                    </button>
+                    <img src={res.image} alt="" className="w-full h-48 object-cover rounded-lg mb-4" />
+                    <h1 className="text-2xl font-light text-[#0B3D5C]">{res.title}</h1>
+                    <p className="text-gray-600 text-sm mt-2">{res.desc}</p>
+                    {bodies[id]}
+                </div>
+            );
+        }
+
+        function SiteFooter({ onOpenChat }) {
+            return (
+                <footer className="bg-[#0B3D5C] text-white mt-12">
+                    <div className="max-w-6xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8 text-[12px]">
+                        <div className="col-span-2 md:col-span-1">
+                            <img src="assets/cumulus-logo.png" alt="Cumulus" className="h-6 max-w-[90px] brightness-0 invert opacity-95 mb-3" />
+                            <p className="text-white/70 leading-relaxed">Banking, borrowing, investing — Life simplified.</p>
+                        </div>
+                        <div>
+                            <p className="font-bold text-[11px] uppercase tracking-wider text-[#7ee8e0] mb-3">Borrowing</p>
+                            <ul className="space-y-2 text-white/80"><li>Mortgages</li><li>Home equity</li><li>Auto loans</li></ul>
+                        </div>
+                        <div>
+                            <p className="font-bold text-[11px] uppercase tracking-wider text-[#7ee8e0] mb-3">Support</p>
+                            <ul className="space-y-2 text-white/80"><li>Contact us</li><li>Locations</li><li>FAQs</li></ul>
+                        </div>
+                        <div>
+                            <p className="font-bold text-[11px] uppercase tracking-wider text-[#7ee8e0] mb-3">Your file</p>
+                            <p className="text-white/80">APP-2847</p>
+                            <button type="button" onClick={onOpenChat} className="mt-3 text-[#7ee8e0] font-semibold hover:underline text-left">Chat with Agentforce →</button>
+                        </div>
+                    </div>
+                    <div className="border-t border-white/15 py-4 px-6 text-center text-[10px] text-white/50 max-w-6xl mx-auto">
+                        © 2024 Cumulus Financial Services · Member FDIC · Equal Housing Lender · NMLS #123456 (demo)
+                    </div>
+                </footer>
+            );
+        }
+
+        function App() {
+            const [isChatOpen, setIsChatOpen] = useState(false);
+            const [activePage, setActivePage] = useState('hub');
+            const [agentDock, setAgentDock] = useState(null);
+            const [isAdaptiveThinking, setIsAdaptiveThinking] = useState(false);
+            const [messages, setMessages] = useState([]);
+            const [inputText, setInputText] = useState('');
+            const [isTyping, setIsTyping] = useState(false);
+            const [demoStep, setDemoStep] = useState(0);
+            const [isSimulatingInput, setIsSimulatingInput] = useState(false);
+            const [isWaitingForAgentTrigger, setIsWaitingForAgentTrigger] = useState(false);
+            const [webSessionComplete, setWebSessionComplete] = useState(false);
+            const [waOfferChoice, setWaOfferChoice] = useState(null);
+            const [showGuidePicker, setShowGuidePicker] = useState(false);
+            const [guidePickerReady, setGuidePickerReady] = useState(false);
+            const [chatGreeted, setChatGreeted] = useState(false);
+            const [isConnecting, setIsConnecting] = useState(false);
+
+            const GUIDE_PICKER_ITEMS = RESOURCES.filter(r => ['borrow_calc', 'checklist', 'rates'].includes(r.id));
+
+            const DEMO_USER_LINES = {
+                1: ["We're first-time buyers in Austin — where should we start?", 2],
+                4: ['Can you open the affordability calculator for our situation?', 5],
+                6: ['What documents should we gather before we apply?', 7],
+                8: ['Can you show me how interest rates work for our conventional loan?', 9],
+                10: ['I need to review all of this with Emily before we talk to a loan officer.', 11],
+            };
+
+            const skipInputTypingRef = useRef(false);
+            const typingTimeoutRef = useRef(null);
+            const agentReplyTimeoutRef = useRef(null);
+            const greetingTimeoutRef = useRef(null);
+            const demoTypingStartedRef = useRef(false);
+            const demoActionLockRef = useRef(false);
+            const textareaRef = useRef(null);
+            const chatEndRef = useRef(null);
+            const currentStepRef = useRef(0);
+
+            useEffect(() => { currentStepRef.current = demoStep; }, [demoStep]);
+            useEffect(() => {
+                if (isChatOpen) {
+                    const s = () => chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    s(); const t = setTimeout(s, 150); return () => clearTimeout(t);
+                }
+            }, [messages, isTyping, isChatOpen]);
+            const openChat = () => setIsChatOpen(true);
+
+            useEffect(() => {
+                if (!isChatOpen || chatGreeted) return;
+                setIsConnecting(true);
+                greetingTimeoutRef.current = setTimeout(() => {
+                    greetingTimeoutRef.current = null;
+                    setIsConnecting(false);
+                    setMessages([{
+                        role: 'agent',
+                        text: 'Hi Marcus — I\'m **Agentforce**, your assistant in this chat. I\'m here to help with your mortgage, affordability, and next steps. **What would you like to know?**'
+                    }]);
+                    setDemoStep(1);
+                    setChatGreeted(true);
+                }, CHAT_CONNECT_MS);
+                return () => {
+                    if (greetingTimeoutRef.current) {
+                        clearTimeout(greetingTimeoutRef.current);
+                        greetingTimeoutRef.current = null;
+                    }
+                    setIsConnecting(false);
+                };
+            }, [isChatOpen, chatGreeted]);
+
+            useEffect(() => {
+                demoTypingStartedRef.current = false;
+                demoActionLockRef.current = false;
+            }, [demoStep]);
+
+            const showMortgageGuidePicker = () => {
+                setActivePage('hub');
+                setShowGuidePicker(true);
+                setGuidePickerReady(false);
+                setAgentDock(null);
+                setTimeout(() => setGuidePickerReady(true), 1800);
+            };
+
+            const navigateTo = (pageId, dockItems = null) => {
+                setShowGuidePicker(false);
+                setGuidePickerReady(false);
+                setIsAdaptiveThinking(true);
+                setAgentDock(null);
+                setTimeout(() => {
+                    setIsAdaptiveThinking(false);
+                    setActivePage(pageId);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    if (dockItems) setAgentDock(dockItems);
+                }, 1600);
+            };
+
+            const goHub = () => {
+                setActivePage('hub');
+                setAgentDock(null);
+                setShowGuidePicker(false);
+                setGuidePickerReady(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            const startTypingInput = (text, nextStep) => {
+                if (demoTypingStartedRef.current || isSimulatingInput || demoActionLockRef.current) return;
+                demoTypingStartedRef.current = true;
+                demoActionLockRef.current = true;
+                if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                setIsSimulatingInput(true);
+                skipInputTypingRef.current = false;
+                setInputText('');
+                let i = 0;
+                const typeNext = () => {
+                    if (skipInputTypingRef.current) {
+                        setInputText(text);
+                        setIsSimulatingInput(false);
+                        setDemoStep(nextStep);
+                        return;
+                    }
+                    if (i < text.length) {
+                        setInputText(text.slice(0, i + 1));
+                        i++;
+                        typingTimeoutRef.current = setTimeout(typeNext, TYPING_BASE_MS + Math.random() * TYPING_JITTER_MS);
+                    } else {
+                        setIsSimulatingInput(false);
+                        setDemoStep(nextStep);
+                    }
+                };
+                typeNext();
+            };
+
+            const triggerAgentResponse = () => {
+                const step = currentStepRef.current;
+                setIsTyping(false);
+                setIsWaitingForAgentTrigger(false);
+
+                if (step === 3) {
+                    setMessages(prev => [...prev, {
+                        role: 'agent',
+                        text: 'For first-time buyers in Austin, I\'d start with these three guides — I\'ve pulled them onto your page below. **Skim them when you like**, then tell me what you want next (calculator, checklist, rates, anything).'
+                    }]);
+                    setDemoStep(4);
+                    showMortgageGuidePicker();
+                } else if (step === 5) {
+                    setMessages(prev => [...prev, {
+                        role: 'agent',
+                        text: 'Opening **How Much Can I Borrow?** — I\'ve pre-filled your income and 10% down from what we know on **APP-2847**. The page is updating now.'
+                    }]);
+                    setDemoStep(6);
+                    navigateTo('borrow_calc', [{ id: 'checklist', label: 'Next: New Homebuyer Checklist' }]);
+                } else if (step === 7) {
+                    setMessages(prev => [...prev, {
+                        role: 'agent',
+                        text: 'Good idea before you apply. Here\'s the **New Homebuyer Checklist** — seven steps aligned with your September closing goal.'
+                    }]);
+                    setDemoStep(8);
+                    navigateTo('checklist', [{ id: 'dos_donts', label: 'Also read: Do\'s & Don\'ts' }]);
+                } else if (step === 9) {
+                    setMessages(prev => [...prev, {
+                        role: 'agent',
+                        text: 'Here\'s **Understand Interest Rates** — including how **CUMULUS26** applies to your conventional file (illustrative table).'
+                    }]);
+                    setDemoStep(10);
+                    navigateTo('rates', null);
+                } else if (step === 11) {
+                    setMessages(prev => [...prev, {
+                        role: 'agent',
+                        text: 'Totally fair — most couples review together first. 💙\n\nI can send a **short recap on WhatsApp** (what you explored today — not to sign a loan there). Or keep chatting here. What works?',
+                        options: ['Yes, send a recap on WhatsApp', 'I\'ll stay on the website for now'],
+                        type: 'wa_offer'
+                    }]);
+                    setDemoStep(12);
+                } else if (step === 14 || step === 15) {
+                    setMessages(prev => [...prev, {
+                        role: 'agent',
+                        text: 'Done 📱 — recap sent. **WhatsApp is for updates and talking to your loan team**, not to close the mortgage. Tomorrow you can ask for a **live specialist** if you want.',
+                        type: 'whatsapp_handoff'
+                    }]);
+                    setDemoStep(16);
+                    setWebSessionComplete(true);
+                }
+            };
+
+            const queueAgentReply = (ms = AI_REPLY_DELAY_MS) => {
+                if (agentReplyTimeoutRef.current) clearTimeout(agentReplyTimeoutRef.current);
+                setIsTyping(true);
+                setIsWaitingForAgentTrigger(false);
+                agentReplyTimeoutRef.current = setTimeout(() => { agentReplyTimeoutRef.current = null; triggerAgentResponse(); }, ms);
+            };
+
+            const sendUserMessage = (text) => {
+                setMessages(prev => [...prev, { role: 'user', text }]);
+                setInputText('');
+            };
+
+            const handleSend = () => {
+                const t = inputText.trim();
+                if (!t || isSimulatingInput || webSessionComplete || isTyping || isConnecting || demoActionLockRef.current) return;
+                const s = currentStepRef.current;
+                if (![2, 5, 7, 9, 11].includes(s)) return;
+                demoActionLockRef.current = true;
+                const sendAndQueue = (nextStep) => {
+                    sendUserMessage(t);
+                    setDemoStep(nextStep);
+                    queueAgentReply();
+                };
+                if (s === 2) sendAndQueue(3);
+                else if (s === 5) sendAndQueue(5);
+                else if (s === 7) sendAndQueue(7);
+                else if (s === 9) sendAndQueue(9);
+                else if (s === 11) sendAndQueue(11);
+            };
+
+            const handleWaOffer = (opt) => {
+                if (waOfferChoice) return;
+                setWaOfferChoice(opt);
+                setMessages(prev => [...prev, { role: 'user', text: opt }]);
+                setInputText('');
+                if (opt.startsWith('Yes')) { setDemoStep(14); queueAgentReply(); }
+                else { setDemoStep(16); setMessages(prev => [...prev, { role: 'agent', text: 'Sure — I\'m here whenever you want to open another guide.' }]); }
+            };
+
+            useEffect(() => {
+                const onKey = (e) => {
+                    if (['Control', 'Shift', 'Meta', 'Alt', 'Tab'].includes(e.key)) return;
+                    if (!isChatOpen || webSessionComplete || isConnecting || isTyping) return;
+
+                    if (isSimulatingInput) {
+                        e.preventDefault();
+                        if (!demoActionLockRef.current) {
+                            demoActionLockRef.current = true;
+                            skipInputTypingRef.current = true;
+                        }
+                        return;
+                    }
+
+                    if (demoActionLockRef.current) {
+                        e.preventDefault();
+                        return;
+                    }
+
+                    const s = currentStepRef.current;
+
+                    if ([2, 5, 7, 9, 11].includes(s)) {
+                        e.preventDefault();
+                        handleSend();
+                        return;
+                    }
+
+                    const line = DEMO_USER_LINES[s];
+                    if (line) {
+                        e.preventDefault();
+                        startTypingInput(line[0], line[1]);
+                        return;
+                    }
+
+                    if (s === 12 && !waOfferChoice) {
+                        e.preventDefault();
+                        if (!demoActionLockRef.current) {
+                            demoActionLockRef.current = true;
+                            handleWaOffer('Yes, send a recap on WhatsApp');
+                        }
+                    }
+                };
+                window.addEventListener('keydown', onKey, true);
+                return () => window.removeEventListener('keydown', onKey, true);
+            }, [isChatOpen, isConnecting, isSimulatingInput, isTyping, webSessionComplete, waOfferChoice]);
+
+            const renderMortgageGuidePicker = () => {
+                if (!showGuidePicker) return null;
+                return (
+                    <div className="sticky top-[72px] z-30 mb-6 fade-in">
+                        <div className="rounded-2xl overflow-hidden border-2 border-[#00A3A1] bg-white/95 backdrop-blur shadow-2xl">
+                            <div className="bg-gradient-to-r from-[#0B3D5C] to-[#145070] text-white px-4 py-3 flex items-center gap-3">
+                                <img src={AGENT_ICON} alt="" className="w-8 h-8 rounded-full bg-white p-1 object-contain" />
+                                <div>
+                                    <p className="font-bold text-[13px]">Agentforce · Mortgage guides</p>
+                                    <p className="text-[10px] text-[#7ee8e0]">Personalized for first-time buyers · APP-2847</p>
+                                </div>
+                                <button type="button" onClick={() => { setShowGuidePicker(false); setGuidePickerReady(false); }} className="ml-auto text-white/70 hover:text-white"><i className="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <p className="text-[11px] text-gray-600 bg-[#f0f9f8] border-b border-[#b8e6e3] px-4 py-2 flex items-center gap-2">
+                                <i className="fa-solid fa-wand-magic-sparkles text-[#00A3A1]"></i> Suggested reading — open any guide or keep chatting
+                            </p>
+                            {!guidePickerReady ? (
+                                <div className="p-5">
+                                    <div className="rounded-lg border border-[#b8e6e3] bg-[#f0f9f8] px-4 py-3 mb-4 flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-full bg-[#0B3D5C] text-white flex items-center justify-center shrink-0">
+                                            <i className="fa-solid fa-wand-magic-sparkles text-[#00A3A1]"></i>
+                                        </div>
+                                        <div>
+                                            <p className="text-[12px] font-bold text-[#0B3D5C]">Selecting guides for your profile…</p>
+                                            <p className="text-[11px] text-gray-600">Conventional 30-yr · Austin · first-time buyers</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        {[1, 2, 3].map(n => (
+                                            <div key={n} className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                                                <div className="h-28 thinking-shimmer"></div>
+                                                <div className="p-3 space-y-2">
+                                                    <div className="h-3 rounded thinking-shimmer"></div>
+                                                    <div className="h-3 rounded thinking-shimmer w-4/5"></div>
+                                                    <div className="h-7 rounded thinking-shimmer mt-2"></div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    {GUIDE_PICKER_ITEMS.map(g => (
+                                        <article key={g.id} className="guide-card bg-white border border-gray-200 rounded-lg overflow-hidden flex flex-col transition cursor-pointer"
+                                            onClick={() => navigateTo(g.id, null)}>
+                                            <img src={g.image} alt="" className="h-28 w-full object-cover" />
+                                            <div className="p-4 flex-1 flex flex-col">
+                                                <h4 className="font-bold text-[#0B3D5C] text-[13px] leading-snug mb-1">{g.title}</h4>
+                                                <p className="text-[11px] text-gray-600 flex-1 line-clamp-2 mb-3">{g.desc}</p>
+                                                <span className="text-[10px] font-bold text-[#2e9e4f] tracking-wide">{g.cta} →</span>
+                                            </div>
+                                        </article>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderAgentDock = () => {
+                if (!agentDock || activePage === 'hub') return null;
+                return (
+                    <div className="sticky top-[72px] z-30 mb-6 fade-in">
+                        <div className="rounded-2xl overflow-hidden border-2 border-[#00A3A1] bg-white/95 backdrop-blur shadow-2xl">
+                            <div className="bg-gradient-to-r from-[#0B3D5C] to-[#145070] text-white px-4 py-3 flex items-center gap-3">
+                                <img src={AGENT_ICON} alt="" className="w-8 h-8 rounded-full bg-white p-1 object-contain" />
+                                <div>
+                                    <p className="font-bold text-[13px]">Agentforce · Adaptive Website</p>
+                                    <p className="text-[10px] text-[#7ee8e0]">Suggested next while you explore</p>
+                                </div>
+                                <button type="button" onClick={() => setAgentDock(null)} className="ml-auto text-white/70 hover:text-white"><i className="fa-solid fa-xmark"></i></button>
+                            </div>
+                            <div className="p-4 flex flex-wrap gap-2">
+                                {agentDock.map(item => (
+                                    <button key={item.id} type="button" onClick={() => navigateTo(item.id, null)}
+                                        className="text-[12px] font-semibold bg-[#f0f9f8] border border-[#b8e6e3] text-[#0B3D5C] px-4 py-2 rounded-full hover:bg-[#00A3A1] hover:text-white transition">
+                                        {item.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderHub = () => (
+                <>
+                    <section className="relative rounded-lg overflow-hidden mb-10 shadow-md">
+                        <img src={HERO_IMG} alt="" className="w-full h-52 sm:h-64 object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#0B3D5C]/80 via-[#0B3D5C]/40 to-transparent flex items-center">
+                            <div className="p-6 sm:p-10 text-white max-w-lg">
+                                <p className="text-[10px] uppercase tracking-[0.2em] text-[#7ee8e0] font-bold mb-2">Personal · Borrowing</p>
+                                <h1 className="text-2xl sm:text-3xl font-light mb-2 leading-tight">Buying your perfect home is easier than ever</h1>
+                                <p className="text-sm text-white/90 mb-4">Take the first step to your new front door with us.</p>
+                                <div className="flex flex-wrap gap-3">
+                                    <button type="button" className="bg-[#2e9e4f] hover:bg-[#268a44] text-white font-bold text-xs px-6 py-2.5 rounded-full tracking-wide">GET PRE-APPROVED</button>
+                                    <button type="button" onClick={openChat} className="bg-white/15 hover:bg-white/25 border border-white/40 text-white font-semibold text-xs px-5 py-2.5 rounded-full backdrop-blur">
+                                        <i className="fa-solid fa-comments mr-1"></i> Ask Agentforce
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div className="grid grid-cols-3 gap-4 mb-10 text-center">
+                        {[{ icon: 'fa-piggy-bank', t: 'Checking' }, { icon: 'fa-vault', t: 'Savings' }, { icon: 'fa-house', t: 'Borrowing' }].map((x, i) => (
+                            <div key={i} className="bg-white border border-gray-200 rounded-lg py-4 px-3 shadow-sm">
+                                <i className={`fa-solid ${x.icon} text-[#00A3A1] text-xl mb-2`}></i>
+                                <p className="text-[12px] font-bold text-[#0B3D5C]">{x.t}</p>
+                            </div>
+                        ))}
+                    </div>
+
+                    <h2 className="text-center text-2xl font-light text-gray-700 mb-1">Interested in a mortgage?</h2>
+                    <p className="text-center text-sm text-gray-500 mb-8 max-w-xl mx-auto">Hand-picked resources for first-time buyers — or ask <button type="button" onClick={openChat} className="text-[#00A3A1] font-semibold hover:underline">Agentforce in chat</button> and we&apos;ll guide you.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-12">
+                        {RESOURCES.map(r => (
+                            <article key={r.id} className="group bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden hover:shadow-md hover:border-[#00A3A1] transition cursor-pointer"
+                                onClick={() => navigateTo(r.id, null)}>
+                                <img src={r.image} alt="" className="h-36 w-full object-cover group-hover:scale-[1.02] transition-transform duration-300" />
+                                <div className="p-4 border-t border-gray-100">
+                                    <h3 className="font-bold text-[#0B3D5C] text-[14px] mb-1 leading-snug">{r.title}</h3>
+                                    <p className="text-[12px] text-gray-600 mb-3 leading-relaxed">{r.desc}</p>
+                                    <span className="text-[11px] font-bold text-[#2e9e4f] tracking-wide">{r.cta} →</span>
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+
+                    <section className="bg-white border border-gray-200 rounded-xl p-6 sm:p-8 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+                        <div>
+                            <h3 className="font-bold text-[#0B3D5C] text-lg">Questions about APP-2847?</h3>
+                            <p className="text-sm text-gray-600 mt-1">Agentforce can open the calculator, checklist, or rate guide while you browse.</p>
+                        </div>
+                        <button type="button" onClick={openChat} className="shrink-0 bg-[#0B3D5C] hover:bg-[#145070] text-white font-bold text-sm px-6 py-3 rounded-full flex items-center gap-2">
+                            <img src={AGENT_ICON} alt="" className="w-6 h-6 rounded-full bg-white p-0.5 object-contain" />
+                            Open chat
+                        </button>
+                    </section>
+                </>
+            );
+
+            return (
+                <div className="min-h-screen flex flex-col">
+                    <div className="bg-[#0B3D5C] text-white text-[11px]">
+                        <div className="mx-auto max-w-6xl px-4 lg:px-8 flex justify-between h-8 items-center">
+                            <div className="flex">
+                                <span className="bg-white/20 px-3 py-1 font-semibold">PERSONAL</span>
+                                <span className="px-3 py-1 opacity-60 hover:opacity-90 cursor-pointer">CORPORATE</span>
+                            </div>
+                            <div className="hidden sm:flex gap-4 opacity-80">
+                                <span className="cursor-pointer hover:opacity-100">Account</span>
+                                <span className="cursor-pointer hover:opacity-100">Contact</span>
+                                <span className="cursor-pointer hover:opacity-100">Locations</span>
+                            </div>
+                        </div>
+                    </div>
+                    <header className="bg-white border-b sticky top-0 z-40 shadow-sm">
+                        <div className="mx-auto max-w-6xl px-4 lg:px-8 h-[52px] flex items-center justify-between gap-4">
+                            <img src="assets/cumulus-logo.png" alt="Cumulus" className="cumulus-logo-sm cursor-pointer shrink-0" onClick={goHub} />
+                            <nav className="hidden lg:flex gap-6 text-[11px] font-bold text-[#0B3D5C] tracking-wide">
+                                <span className="cursor-pointer hover:text-[#00A3A1]">BANKING</span>
+                                <span className="cursor-pointer hover:text-[#00A3A1]">CREDIT CARDS</span>
+                                <span className="text-[#00A3A1] border-b-2 border-[#00A3A1] pb-0.5">BORROWING</span>
+                                <span className="cursor-pointer hover:text-[#00A3A1]">INVESTING</span>
+                                <span className="cursor-pointer hover:text-[#00A3A1]">INSURANCE</span>
+                            </nav>
+                            <div className="flex items-center gap-3 text-[12px] text-gray-600 shrink-0">
+                                <span className="hidden sm:inline"><i className="fa-regular fa-circle-user text-[#00A3A1]"></i> Hi, Marcus</span>
+                                <span className="text-[10px] bg-[#f0f9f8] text-[#0B3D5C] px-2 py-0.5 rounded font-semibold">APP-2847</span>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="flex-1 mx-auto w-full max-w-6xl px-4 lg:px-8 py-8">
+                        <div className="w-full">
+                            {webSessionComplete && (
+                                <div className="mb-6 p-4 rounded-lg border-2 border-[#25D366] bg-[#ecfdf5] flex items-center gap-4 fade-in">
+                                    <i className="fa-brands fa-whatsapp text-3xl text-[#25D366]"></i>
+                                    <p className="text-sm text-[#166534] flex-1">Recap on WhatsApp — ask for a <strong>loan specialist</strong> when you're ready (not to close here).</p>
+                                    <a href="agenticWhatsappCumulusMortgageEN.html" className="bg-[#25D366] text-white font-bold px-4 py-2 rounded-lg text-sm">Open WhatsApp</a>
+                                </div>
+                            )}
+
+                            {isAdaptiveThinking && (
+                                <div className="mb-4 p-4 rounded-lg border border-[#b8e6e3] bg-[#f0f9f8] flex gap-3 fade-in">
+                                    <div className="w-10 h-10 rounded-full bg-[#0B3D5C] flex items-center justify-center shrink-0">
+                                        <i className="fa-solid fa-wand-magic-sparkles text-[#00A3A1] thinking-shimmer w-5 h-5 rounded"></i>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-[#0B3D5C]">Updating page for you…</p>
+                                        <p className="text-xs text-gray-600">Adaptive Website · APP-2847</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {renderMortgageGuidePicker()}
+                            {renderAgentDock()}
+
+                            {activePage === 'hub' ? renderHub() : (
+                                <ResourceArticle id={activePage} onBack={goHub} />
+                            )}
+                            <SiteFooter onOpenChat={openChat} />
+                        </div>
+                    </main>
+
+                    {isChatOpen && (
+                        <div className="fixed inset-0 bg-black/25 z-[55] sm:hidden chat-backdrop" onClick={() => setIsChatOpen(false)} aria-hidden="true" />
+                    )}
+
+                    {isChatOpen && (
+                            <div className="chat-panel fixed z-[60] inset-x-0 bottom-0 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[400px] flex flex-col bg-white sm:rounded-xl border border-gray-200 h-[min(92vh,720px)] sm:h-[min(640px,calc(100vh-48px))]">
+                                <div className="px-4 py-3 bg-[#0B3D5C] text-white flex justify-between shrink-0 rounded-t-xl sm:rounded-t-xl">
+                                    <div className="flex items-center gap-2">
+                                        <img src={AGENT_ICON} alt="" className="w-7 h-7 bg-white rounded-full p-0.5 object-contain" />
+                                        <span className="font-bold text-sm">Cumulus Agentforce</span>
+                                    </div>
+                                    <button type="button" onClick={() => setIsChatOpen(false)} aria-label="Close chat" className="w-8 h-8 rounded-full hover:bg-white/15 flex items-center justify-center"><i className="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-[#f6f8fc]">
+                                    {isConnecting && (
+                                        <div className="fade-in flex gap-3 p-3 rounded-xl bg-white border border-gray-200">
+                                            <img src={AGENT_ICON} alt="" className="w-8 h-8 rounded-full bg-white border p-1 object-contain shrink-0" />
+                                            <div className="text-xs text-gray-500 pt-2">
+                                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#00A3A1] animate-pulse mr-1"></span>
+                                                Connecting with Agentforce…
+                                            </div>
+                                        </div>
+                                    )}
+                                    {messages.map((m, i) => (
+                                        <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : ''} fade-in`}>
+                                            {m.role === 'agent' && <img src={AGENT_ICON} alt="" className="w-6 h-6 mr-2 mt-1 rounded-full border bg-white p-0.5 object-contain" />}
+                                            <div className="max-w-[90%]">
+                                                <div className={`text-[13px] px-3 py-2 rounded-2xl ${m.role === 'user' ? 'bg-[#00A3A1] text-white' : 'bg-white border'}`}
+                                                    dangerouslySetInnerHTML={{ __html: m.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }} />
+                                                {m.options?.map((o, j) => (
+                                                    <button key={j} type="button" disabled={waOfferChoice} onClick={() => handleWaOffer(o)}
+                                                        className="mt-1.5 w-full text-left text-xs border border-[#00A3A1] rounded-lg px-3 py-2 bg-white hover:bg-[#f0f9f8]">
+                                                        <i className="fa-brands fa-whatsapp text-[#25D366] mr-1"></i>{o}
+                                                    </button>
+                                                ))}
+                                                {m.type === 'whatsapp_handoff' && (
+                                                    <a href="agenticWhatsappCumulusMortgageEN.html" className="mt-2 inline-flex gap-2 bg-[#25D366] text-white text-xs font-bold px-3 py-2 rounded-lg">
+                                                        <i className="fa-brands fa-whatsapp"></i> Open WhatsApp
+                                                    </a>
+                                                )}
+                                            </div>
+                                            {m.role === 'user' && <span className="w-6 h-6 ml-2 bg-blue-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center">M</span>}
+                                        </div>
+                                    ))}
+                                    {isTyping && messages.length > 0 && <div className="text-xs text-gray-400 pl-8">Agentforce is typing…</div>}
+                                    <div ref={chatEndRef} />
+                                </div>
+                                <div className="p-3 border-t shrink-0 bg-white sm:rounded-b-xl">
+                                    <form onSubmit={e => { e.preventDefault(); handleSend(); }} className="relative">
+                                        <textarea ref={textareaRef} value={inputText} readOnly tabIndex={-1}
+                                            onKeyDown={e => e.preventDefault()}
+                                            onPaste={e => e.preventDefault()}
+                                            placeholder={isConnecting ? 'Connecting…' : webSessionComplete ? 'Continued on WhatsApp' : 'Press any key to continue the demo…'}
+                                            className="chat-textarea w-full bg-gray-100 rounded-2xl pl-3 pr-10 py-2 text-sm" rows="1" />
+                                        <button type="submit" className="absolute right-2 bottom-2 p-1.5 bg-[#0B3D5C] text-white rounded-full disabled:bg-gray-300 hover:bg-[#145070]" disabled={!inputText.trim() || isSimulatingInput || webSessionComplete || isConnecting}>
+                                            <i className="fa-solid fa-paper-plane text-[10px]"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                    )}
+
+                    {!isChatOpen && (
+                        <button type="button" onClick={openChat} className="chat-fab fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-[#0B3D5C] hover:bg-[#145070] text-white pl-4 pr-5 py-3 rounded-full">
+                            <span className="relative flex h-10 w-10 items-center justify-center">
+                                <img src={AGENT_ICON} alt="" className="w-9 h-9 bg-white rounded-full p-1 object-contain" />
+                                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-[#2e9e4f] border-2 border-[#0B3D5C] rounded-full"></span>
+                            </span>
+                            <span className="font-bold text-[13px] pr-1 hidden sm:block">Chat with Agentforce</span>
+                        </button>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
