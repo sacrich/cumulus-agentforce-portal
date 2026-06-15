@@ -13,28 +13,25 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        html, body { margin: 0; height: 100%; overflow: hidden; font-family: Montserrat, system-ui, sans-serif; background: #e8ecf0; }
-        .phone-stage {
-            height: 100vh; height: 100dvh; display: flex; align-items: center; justify-content: center;
-            padding: 12px; box-sizing: border-box;
-        }
+        html, body { margin: 0; height: 100%; overflow: hidden; font-family: Montserrat, system-ui, sans-serif; background: #d1d5db; }
+        .phone-stage { height: 100vh; height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; }
         .phone-frame {
-            width: 390px; height: min(844px, calc(100dvh - 24px)); max-height: calc(100dvh - 24px);
+            width: 390px; height: min(844px, calc(100dvh - 20px)); max-height: calc(100dvh - 20px);
             border-radius: 48px; border: 12px solid #1a1a1a; background: #000;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.45); overflow: hidden; display: flex; flex-direction: column;
         }
-        .phone-screen { flex: 1; background: #f4f6f8; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .screen-enter { animation: slideIn 0.35s ease-out forwards; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+        .phone-screen { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; background: #000; }
+        .wallpaper { background: linear-gradient(160deg, #1e3a5f 0%, #0B3D5C 40%, #072a3f 100%); }
+        .push-banner { animation: pushDrop 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) forwards; }
+        @keyframes pushDrop { from { opacity: 0; transform: translateY(-120%); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .chat-sheet { animation: sheetUp 0.3s ease-out forwards; }
-        @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .demo-hint {
-            position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%);
-            background: rgba(11,61,92,0.92); color: #fff; font-size: 11px; padding: 8px 14px;
-            border-radius: 999px; z-index: 100; white-space: nowrap; pointer-events: none;
+        .ios-keyboard {
+            background: #d1d5db; border-top: 1px solid #b8bcc0; padding: 6px 4px 24px;
+            flex-shrink: 0;
         }
+        .ios-key { background: #fff; border-radius: 5px; box-shadow: 0 1px 0 #898a8d; font-size: 17px; font-weight: 400; }
+        .chat-input-mock { background: #fff; border: 1px solid #c7c7cc; border-radius: 20px; min-height: 36px; }
     </style>
 </head>
 <body>
@@ -44,126 +41,175 @@
 
         const AGENT_ICON = 'assets/cumulus-icon.png';
         const WA_LINK = 'agenticWhatsappCumulusMortgageEN.html?from=mobile';
-        const AI_REPLY_DELAY_MS = 2200;
-        const CHAT_CONNECT_MS = 1800;
+        const TYPING_BASE_MS = 32;
+        const TYPING_JITTER_MS = 20;
+        const AI_REPLY_DELAY_MS = 2400;
+        const CHAT_CONNECT_MS = 1600;
 
-        const CHECKLIST = [
-            { id: 1, label: 'W-2s & pay stubs (2 years)', done: true },
-            { id: 2, label: 'Bank statements (2 months)', done: true },
-            { id: 3, label: 'Photo ID — Marcus', done: true },
-            { id: 4, label: 'Emily co-borrower invite', done: false, action: 'Invite sent' },
-            { id: 5, label: 'Homeowners insurance quote', done: false },
-        ];
+        const CALL_RECAP = {
+            advisor: 'David Martinez',
+            duration: '18 min',
+            when: 'Today · 2:15 PM',
+            bullets: [
+                'First-time buyers · Marcus & Emily · Austin area',
+                'Conventional 30-yr on **APP-2847** · pre-qual ~**$425K**',
+                '10% down discussed · PMI until ~20% equity',
+                'Closing costs ~$8–12K · Premier assistance possible',
+                'Target closing **mid-September** · CUMULUS26 noted',
+            ],
+        };
+
+        const INITIAL_LOAN = {
+            termYears: 30,
+            monthlyPayment: 2640,
+            downPct: 10,
+            rate: 6.0,
+            loanAmount: 425000,
+            label: 'From your call with David',
+        };
 
         function fmtMoney(n) { return '$' + n.toLocaleString(); }
 
-        function HomeScreen({ onOpenMortgage }) {
+        function StatusBar({ dark }) {
             return (
-                <div className="screen-enter flex-1 overflow-y-auto p-4 pb-24">
-                    <p className="text-[11px] text-gray-500 font-semibold uppercase tracking-wide mb-3">Good afternoon, Marcus</p>
-                    <div className="bg-[#0B3D5C] rounded-2xl p-4 text-white mb-4 shadow-lg">
-                        <p className="text-[10px] text-[#7ee8e0] font-bold uppercase tracking-wider">Premier Checking</p>
-                        <p className="text-2xl font-bold mt-1">$24,180.42</p>
-                    </div>
-                    <button type="button" onClick={onOpenMortgage}
-                        className="w-full text-left bg-white border-2 border-[#00A3A1] rounded-2xl p-4 shadow-sm mb-3 hover:bg-[#f0f9f8] transition">
-                        <div className="flex items-start justify-between gap-2">
-                            <div>
-                                <p className="text-[10px] font-bold text-[#00A3A1] uppercase">Mortgage · In progress</p>
-                                <p className="font-bold text-[#0B3D5C] mt-1">APP-2847</p>
-                                <p className="text-xs text-gray-500 mt-1">Conventional 30-yr · Austin · with Emily</p>
-                            </div>
-                            <div className="w-12 h-12 rounded-full border-4 border-[#00A3A1] border-t-transparent flex items-center justify-center text-[10px] font-bold text-[#0B3D5C]">65%</div>
+                <div className={`shrink-0 px-5 pt-3 pb-1 flex justify-between text-[11px] font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>
+                    <span>9:41</span>
+                    <span><i className="fa-solid fa-signal"></i> <i className="fa-solid fa-wifi ml-1"></i> <i className="fa-solid fa-battery-full ml-1"></i></span>
+                </div>
+            );
+        }
+
+        function LoanSummaryCard({ loan }) {
+            return (
+                <div className="mx-3 mt-2 mb-2 bg-white rounded-xl border border-[#b8e6e3] shadow-sm p-3 fade-in">
+                    <div className="flex justify-between items-start gap-2">
+                        <div>
+                            <p className="text-[9px] font-bold text-[#00A3A1] uppercase tracking-wide">APP-2847 · Live estimate</p>
+                            <p className="text-xl font-bold text-[#0B3D5C] mt-0.5">{fmtMoney(loan.monthlyPayment)}<span className="text-xs font-normal text-gray-500">/mo</span></p>
                         </div>
-                        <p className="text-[11px] text-[#0B3D5C] font-semibold mt-3"><i className="fa-solid fa-chevron-right text-[10px] mr-1"></i>Continue application</p>
-                    </button>
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-[11px] text-amber-900 flex gap-2 items-center fade-in">
-                        <i className="fa-solid fa-bell text-amber-600"></i>
-                        <span>Pre-qual ready — tap to upload docs or chat with Agentforce</span>
+                        <div className="text-right text-[10px] text-gray-500">
+                            <p>{loan.termYears}-yr fixed</p>
+                            <p>{loan.rate}% APR</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-3 mt-2 pt-2 border-t border-gray-100 text-[10px] text-gray-600">
+                        <span><strong>{loan.downPct}%</strong> down</span>
+                        <span><strong>{fmtMoney(loan.loanAmount)}</strong> loan</span>
+                    </div>
+                    <p className="text-[9px] text-gray-400 mt-1.5">{loan.label}</p>
+                </div>
+            );
+        }
+
+        function IOSKeyboard() {
+            const rows = [
+                ['Q','W','E','R','T','Y','U','I','O','P'],
+                ['A','S','D','F','G','H','J','K','L'],
+                ['⇧','Z','X','C','V','B','N','M','⌫'],
+            ];
+            return (
+                <div className="ios-keyboard">
+                    {rows.map((row, ri) => (
+                        <div key={ri} className="flex justify-center gap-[5px] mb-[6px] px-1">
+                            {row.map((k, ki) => (
+                                <span key={ki} className={`ios-key flex items-center justify-center text-gray-900 ${k.length > 1 ? 'px-3 min-w-[28px]' : 'w-[31px] h-[42px]'}`}>{k}</span>
+                            ))}
+                        </div>
+                    ))}
+                    <div className="flex gap-[5px] px-1">
+                        <span className="ios-key flex-1 h-[42px] flex items-center justify-center text-sm text-gray-600">space</span>
+                        <span className="ios-key w-16 h-[42px] flex items-center justify-center text-sm font-semibold text-blue-600">return</span>
                     </div>
                 </div>
             );
         }
 
-        function CalculatorScreen() {
-            const price = 425000;
-            const down = 42500;
-            const piti = 2640;
+        function PushScreen({ onOpen }) {
             return (
-                <div className="screen-enter flex-1 overflow-y-auto p-4 pb-24">
-                    <h2 className="text-lg font-bold text-[#0B3D5C]">Affordability</h2>
-                    <p className="text-xs text-gray-500 mb-4">Pre-filled from APP-2847</p>
-                    <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4 shadow-sm">
-                        <div>
-                            <label className="text-[10px] font-bold text-gray-400 uppercase">Household income</label>
-                            <p className="text-right font-bold text-[#0B3D5C]">$165,000</p>
-                            <input type="range" className="w-full accent-[#00A3A1] mt-1" defaultValue="165000" min="80000" max="250000" readOnly />
-                        </div>
-                        <div>
-                            <label className="text-[10px] font-bold text-gray-400 uppercase">Down payment</label>
-                            <p className="text-right font-bold text-[#0B3D5C]">10% · {fmtMoney(down)}</p>
-                        </div>
-                        <div className="bg-[#f0f9f8] rounded-lg p-3 space-y-2 text-sm">
-                            <div className="flex justify-between"><span>Target price</span><strong>{fmtMoney(price)}</strong></div>
-                            <div className="flex justify-between"><span>Est. P&I + tax/ins.</span><strong>~{fmtMoney(piti)}/mo</strong></div>
-                            <p className="text-[10px] text-gray-500 pt-2 border-t border-[#b8e6e3]">Illustrative · CUMULUS26 eligible</p>
-                        </div>
+                <div className="wallpaper flex-1 flex flex-col">
+                    <StatusBar dark />
+                    <div className="flex-1 flex flex-col items-center justify-end pb-16 px-6">
+                        <p className="text-white/50 text-xs mb-8">Tuesday, June 9</p>
+                        <p className="text-white/70 text-5xl font-light mb-auto mt-20">9:41</p>
                     </div>
-                </div>
-            );
-        }
-
-        function DocsScreen() {
-            return (
-                <div className="screen-enter flex-1 overflow-y-auto p-4 pb-24">
-                    <h2 className="text-lg font-bold text-[#0B3D5C]">Documents</h2>
-                    <p className="text-xs text-gray-500 mb-4">Snap &amp; upload from your phone</p>
-                    <ul className="space-y-2">
-                        {CHECKLIST.map(item => (
-                            <li key={item.id} className="bg-white rounded-xl border border-gray-200 p-3 flex items-center gap-3">
-                                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-xs ${item.done ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
-                                    <i className={`fa-solid ${item.done ? 'fa-check' : 'fa-camera'}`}></i>
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-800">{item.label}</p>
-                                    {item.action && <p className="text-[10px] text-[#00A3A1] font-semibold">{item.action}</p>}
+                    <div className="px-3 pb-3">
+                        <button type="button" onClick={onOpen}
+                            className="push-banner w-full text-left bg-white/95 backdrop-blur rounded-2xl p-3 shadow-xl flex gap-3">
+                            <img src={AGENT_ICON} alt="" className="w-10 h-10 rounded-xl object-contain bg-[#f0f9f8] p-1 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[11px] font-bold text-gray-500 uppercase">Cumulus</span>
+                                    <span className="text-[10px] text-gray-400">now</span>
                                 </div>
-                            </li>
-                        ))}
-                    </ul>
-                    <button type="button" className="mt-4 w-full py-3 rounded-xl border-2 border-dashed border-[#00A3A1] text-[#0B3D5C] text-sm font-semibold">
-                        <i className="fa-solid fa-camera mr-2"></i>Scan pay stub
-                    </button>
+                                <p className="text-sm font-bold text-gray-900 truncate">Your call summary is ready</p>
+                                <p className="text-xs text-gray-600 truncate">David Martinez · APP-2847 · tap to continue</p>
+                            </div>
+                        </button>
+                        <p className="text-center text-white/60 text-[10px] mt-3">Tap notification or press any key</p>
+                    </div>
                 </div>
             );
         }
 
-        function RatesScreen() {
+        function CallRecapScreen({ onContinue }) {
             return (
-                <div className="screen-enter flex-1 overflow-y-auto p-4 pb-24">
-                    <h2 className="text-lg font-bold text-[#0B3D5C]">Your rate</h2>
-                    <p className="text-xs text-gray-500 mb-4">Conventional 30-yr · APP-2847</p>
-                    <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm mb-3">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase">With CUMULUS26</p>
-                        <p className="text-3xl font-bold text-[#0B3D5C] mt-1">6.00% <span className="text-sm font-normal text-gray-400">APR</span></p>
-                        <p className="text-xs text-gray-500 line-through mt-1">Was 6.25%</p>
+                <div className="flex-1 flex flex-col bg-[#f4f6f8] overflow-hidden">
+                    <StatusBar dark={false} />
+                    <div className="bg-[#0B3D5C] text-white px-4 py-3 shrink-0">
+                        <div className="flex items-center gap-3">
+                            <button type="button" className="text-white/80"><i className="fa-solid fa-chevron-left"></i></button>
+                            <div>
+                                <p className="text-sm font-bold">Call summary</p>
+                                <p className="text-[10px] text-[#7ee8e0]">Synced to your Cumulus app</p>
+                            </div>
+                        </div>
                     </div>
-                    <div className="bg-gradient-to-r from-[#0B3D5C] to-[#00A3A1] rounded-xl p-4 text-white">
-                        <p className="text-[10px] font-bold uppercase text-[#7ee8e0]">Rate lock offer</p>
-                        <p className="font-bold mt-1">RATELOCK48</p>
-                        <p className="text-xs text-white/85 mt-2">Lock this rate for 48 hours · fee waived for Premier clients</p>
-                        <p className="text-[10px] mt-3 bg-white/15 inline-block px-2 py-1 rounded">Expires in 47h 12m</p>
+                    <div className="flex-1 overflow-y-auto p-4 pb-6">
+                        <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm fade-in">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-12 h-12 rounded-full bg-[#0B3D5C] flex items-center justify-center text-white">
+                                    <i className="fa-solid fa-phone text-lg"></i>
+                                </div>
+                                <div>
+                                    <p className="font-bold text-[#0B3D5C]">{CALL_RECAP.advisor}</p>
+                                    <p className="text-xs text-gray-500">Loan specialist · {CALL_RECAP.duration}</p>
+                                    <p className="text-[10px] text-gray-400">{CALL_RECAP.when}</p>
+                                </div>
+                            </div>
+                            <p className="text-xs text-gray-500 mb-3 font-semibold uppercase tracking-wide">Discussed on the call</p>
+                            <ul className="space-y-2.5">
+                                {CALL_RECAP.bullets.map((b, i) => (
+                                    <li key={i} className="text-sm text-gray-700 flex gap-2">
+                                        <span className="text-[#00A3A1] shrink-0">•</span>
+                                        <span dangerouslySetInnerHTML={{ __html: b.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-4 text-center leading-relaxed">
+                            This is what you covered by phone — not a web page. Agentforce can help you <strong>adjust term &amp; payment</strong> next.
+                        </p>
+                    </div>
+                    <div className="p-4 bg-white border-t border-gray-200 shrink-0">
+                        <button type="button" onClick={onContinue}
+                            className="w-full py-3.5 rounded-xl bg-[#0B3D5C] text-white font-bold text-sm shadow-lg">
+                            Continue with Agentforce
+                        </button>
+                        <p className="text-center text-[10px] text-gray-400 mt-2">Press any key</p>
                     </div>
                 </div>
             );
         }
 
         function App() {
-            const [screen, setScreen] = useState('home');
-            const [chatOpen, setChatOpen] = useState(false);
+            const [phase, setPhase] = useState('push');
+            const [loan, setLoan] = useState(INITIAL_LOAN);
             const [messages, setMessages] = useState([]);
+            const [inputText, setInputText] = useState('');
             const [isTyping, setIsTyping] = useState(false);
             const [isConnecting, setIsConnecting] = useState(false);
+            const [isSimulatingInput, setIsSimulatingInput] = useState(false);
+            const [keyboardVisible, setKeyboardVisible] = useState(false);
             const [demoStep, setDemoStep] = useState(0);
             const [sessionComplete, setSessionComplete] = useState(false);
             const [waOfferChoice, setWaOfferChoice] = useState(null);
@@ -171,35 +217,36 @@
 
             const demoStepRef = useRef(0);
             const agentTimeoutRef = useRef(null);
+            const typingTimeoutRef = useRef(null);
+            const skipTypingRef = useRef(false);
+            const demoLockRef = useRef(false);
+            const demoTypingStartedRef = useRef(false);
             const chatEndRef = useRef(null);
+            const inputRef = useRef(null);
 
             useEffect(() => { demoStepRef.current = demoStep; }, [demoStep]);
             useEffect(() => {
-                if (chatOpen) chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            }, [messages, isTyping, chatOpen]);
-
-            const openChat = () => {
-                setChatOpen(true);
-                setScreen('home');
-            };
+                if (phase === 'chat') chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }, [messages, isTyping, inputText, phase, keyboardVisible]);
 
             useEffect(() => {
-                if (!chatOpen || chatGreeted) return;
+                if (phase !== 'chat' || chatGreeted) return;
                 setIsConnecting(true);
                 const t = setTimeout(() => {
                     setIsConnecting(false);
                     setMessages([{
                         role: 'agent',
-                        text: 'Hi Marcus — welcome back to **Cumulus Mobile**. Your **APP-2847** pre-qual is synced. I can open your **calculator**, **document checklist**, or **rate lock** — what first?'
+                        text: 'Hi Marcus — I pulled in your **call with David**. You\'re on **APP-2847**: 30-yr conventional, about **$2,640/mo**.\n\nWant to try a **shorter term** or a **target monthly payment**? I\'ll update your estimate right here — no website needed.',
                     }]);
                     setDemoStep(1);
                     setChatGreeted(true);
                 }, CHAT_CONNECT_MS);
                 return () => clearTimeout(t);
-            }, [chatOpen, chatGreeted]);
+            }, [phase, chatGreeted]);
 
             const queueAgent = (fn) => {
                 setIsTyping(true);
+                setKeyboardVisible(false);
                 if (agentTimeoutRef.current) clearTimeout(agentTimeoutRef.current);
                 agentTimeoutRef.current = setTimeout(() => {
                     agentTimeoutRef.current = null;
@@ -208,189 +255,221 @@
                 }, AI_REPLY_DELAY_MS);
             };
 
-            const addUser = (text) => setMessages(prev => [...prev, { role: 'user', text }]);
+            const sendUserMessage = (text) => {
+                setMessages(prev => [...prev, { role: 'user', text }]);
+                setInputText('');
+                setKeyboardVisible(false);
+            };
 
             const triggerAgent = () => {
                 const s = demoStepRef.current;
                 if (s === 3) {
-                    setMessages(prev => [...prev, { role: 'agent', text: 'Opening **Affordability** — income & 10% down pre-filled from your email conversation.' }]);
-                    setScreen('calculator');
+                    setLoan({ termYears: 15, monthlyPayment: 3180, downPct: 10, rate: 5.85, loanAmount: 425000, label: 'Updated · 15-yr scenario' });
+                    setMessages(prev => [...prev, {
+                        role: 'agent',
+                        text: 'Good thinking — **15-year fixed** at ~**5.85%** (illustrative):\n\n• Payment **~$3,180/mo** (+$540)\n• Less total interest vs. 30-yr\n• Same **APP-2847** file — Emily sees this too\n\nI updated your estimate above ↑',
+                        loanUpdated: true,
+                    }]);
                     setDemoStep(4);
                 } else if (s === 5) {
-                    setMessages(prev => [...prev, { role: 'agent', text: 'Here\'s your **document hub**. Use the camera to snap pay stubs — I\'ve sent **Emily** a co-borrower invite to her email on file.' }]);
-                    setScreen('docs');
+                    setLoan({ termYears: 30, monthlyPayment: 2395, downPct: 15, rate: 6.0, loanAmount: 425000, label: 'Updated · 15% down · ~$2,395/mo target' });
+                    setMessages(prev => [...prev, {
+                        role: 'agent',
+                        text: 'To land near **$2,400/mo**, I modeled **15% down** on the 30-yr:\n\n• **~$2,395/mo** estimated P&I + tax/ins.\n• Extra $42,500 down vs. 10%\n\nCheck the card above — still **APP-2847**, ready for Emily to review.',
+                        loanUpdated: true,
+                    }]);
                     setDemoStep(6);
                 } else if (s === 7) {
-                    setMessages(prev => [...prev, { role: 'agent', text: 'Your illustrative rate with **CUMULUS26** is **6.00%**. **RATELOCK48** is active — 48h lock, fee waived.' }]);
-                    setScreen('rates');
-                    setDemoStep(8);
-                } else if (s === 9) {
                     setMessages(prev => [...prev, {
                         role: 'agent',
-                        text: 'Makes sense — review with Emily first. 💙\n\nI can send a **short recap on WhatsApp** (not to sign the loan there). Or keep going in the app.',
+                        text: 'Absolutely — review together first. 💙\n\nI can send a **WhatsApp recap** with today\'s numbers (call + these scenarios). Not for signing the loan there.',
                         options: ['Yes, send recap on WhatsApp', 'Stay in the app'],
-                        type: 'wa_offer'
+                        type: 'wa_offer',
                     }]);
-                    setDemoStep(10);
-                } else if (s === 12) {
+                    setDemoStep(8);
+                } else if (s === 10) {
                     setMessages(prev => [...prev, {
                         role: 'agent',
-                        text: 'Done 📱 — recap sent. **WhatsApp is for updates and your loan team** — ask for **David Martinez** when you\'re ready.',
-                        type: 'whatsapp_handoff'
+                        text: 'Done 📱 — recap sent with your **$2,395/mo** scenario. **WhatsApp = updates & David\'s team** when you\'re ready.',
+                        type: 'whatsapp_handoff',
                     }]);
-                    setDemoStep(13);
+                    setDemoStep(11);
                     setSessionComplete(true);
                 }
+            };
+
+            const startTypingInput = (text, nextStep) => {
+                if (demoTypingStartedRef.current || isSimulatingInput || demoLockRef.current) return;
+                demoTypingStartedRef.current = true;
+                demoLockRef.current = true;
+                if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                setIsSimulatingInput(true);
+                setKeyboardVisible(true);
+                skipTypingRef.current = false;
+                setInputText('');
+                let i = 0;
+                const typeNext = () => {
+                    if (skipTypingRef.current) {
+                        setInputText(text);
+                        setIsSimulatingInput(false);
+                        setDemoStep(nextStep);
+                        sendUserMessage(text);
+                        demoTypingStartedRef.current = false;
+                        demoLockRef.current = false;
+                        queueAgent(triggerAgent);
+                        return;
+                    }
+                    if (i < text.length) {
+                        setInputText(text.slice(0, i + 1));
+                        i++;
+                        typingTimeoutRef.current = setTimeout(typeNext, TYPING_BASE_MS + Math.random() * TYPING_JITTER_MS);
+                    } else {
+                        setIsSimulatingInput(false);
+                        setDemoStep(nextStep);
+                        setTimeout(() => {
+                            sendUserMessage(text);
+                            demoTypingStartedRef.current = false;
+                            demoLockRef.current = false;
+                            queueAgent(triggerAgent);
+                        }, 350);
+                    }
+                };
+                typeNext();
             };
 
             const handleWaOffer = (opt) => {
                 if (waOfferChoice) return;
                 setWaOfferChoice(opt);
-                addUser(opt);
+                setMessages(prev => [...prev, { role: 'user', text: opt }]);
                 if (opt.startsWith('Yes')) {
-                    setDemoStep(12);
+                    setDemoStep(10);
                     queueAgent(triggerAgent);
-                } else {
-                    setMessages(prev => [...prev, { role: 'agent', text: 'Sure — tap **Mortgage** anytime to continue in the app.' }]);
                 }
             };
 
-            const advanceDemo = () => {
+            const DEMO_USER_LINES = {
+                1: ['What if we went with a 15-year term? Emily wants to pay less interest overall.', 3],
+                4: ['Can we get closer to $2,400 a month? We could put 15% down instead.', 5],
+                6: ['This helps — Emily and I want to review everything before we talk to David again.', 7],
+            };
+
+            const handleDemoKey = () => {
+                if (phase === 'push') { setPhase('recap'); return; }
+                if (phase === 'recap') { setPhase('chat'); return; }
+                if (sessionComplete || isConnecting || isTyping || isSimulatingInput) return;
+
                 const s = demoStepRef.current;
-                const lines = {
-                    1: ['Can you show me what we can afford on APP-2847?', 3],
-                    4: ['What documents do we need? Can Emily sign too?', 5],
-                    6: ['How does our rate look with the promo from email?', 7],
-                    8: ['This is a lot — Emily and I want to review before talking to someone.', 9],
-                };
-                if (lines[s]) {
-                    const [text, next] = lines[s];
-                    addUser(text);
-                    setDemoStep(next);
-                    queueAgent(triggerAgent);
+                if (DEMO_USER_LINES[s]) {
+                    const [text, next] = DEMO_USER_LINES[s];
+                    startTypingInput(text, next);
                     return;
                 }
-                if (s === 10 && !waOfferChoice) {
+                if (s === 8 && !waOfferChoice) {
+                    demoLockRef.current = true;
                     handleWaOffer('Yes, send recap on WhatsApp');
+                    demoLockRef.current = false;
                 }
             };
 
             useEffect(() => {
                 const onKey = (e) => {
                     if (['Control', 'Shift', 'Meta', 'Alt', 'Tab'].includes(e.key)) return;
-                    if (sessionComplete || isTyping || isConnecting) return;
-                    if (!chatOpen) {
-                        if (e.key.length === 1) openChat();
+                    if (isSimulatingInput) {
+                        e.preventDefault();
+                        if (!demoLockRef.current) {
+                            demoLockRef.current = true;
+                            skipTypingRef.current = true;
+                        }
                         return;
                     }
+                    if (demoLockRef.current && phase === 'chat') return;
                     e.preventDefault();
-                    advanceDemo();
+                    handleDemoKey();
                 };
                 window.addEventListener('keydown', onKey, true);
                 return () => window.removeEventListener('keydown', onKey, true);
-            }, [chatOpen, sessionComplete, isTyping, isConnecting, waOfferChoice]);
+            }, [phase, sessionComplete, isConnecting, isTyping, isSimulatingInput, waOfferChoice]);
 
-            const renderScreen = () => {
-                if (screen === 'calculator') return <CalculatorScreen />;
-                if (screen === 'docs') return <DocsScreen />;
-                if (screen === 'rates') return <RatesScreen />;
-                return <HomeScreen onOpenMortgage={() => { setScreen('home'); openChat(); }} />;
-            };
-
-            const tabs = [
-                { id: 'home', icon: 'fa-house', label: 'Home' },
-                { id: 'mortgage', icon: 'fa-file-invoice-dollar', label: 'Mortgage' },
-                { id: 'pay', icon: 'fa-arrow-right-arrow-left', label: 'Pay' },
-                { id: 'more', icon: 'fa-ellipsis', label: 'More' },
-            ];
+            useEffect(() => {
+                demoTypingStartedRef.current = false;
+                demoLockRef.current = false;
+            }, [demoStep]);
 
             return (
                 <div className="phone-stage">
                     <div className="phone-frame">
                         <div className="phone-screen">
-                            <div className="shrink-0 bg-[#0B3D5C] text-white px-4 pt-3 pb-2">
-                                <div className="flex justify-between text-[10px] font-semibold mb-2">
-                                    <span>9:41</span>
-                                    <span><i className="fa-solid fa-signal"></i> <i className="fa-solid fa-wifi ml-1"></i> <i className="fa-solid fa-battery-full ml-1"></i></span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <img src="assets/cumulus-logo.png" alt="Cumulus" className="h-5 brightness-0 invert" />
-                                    <span className="text-[10px] bg-white/15 px-2 py-0.5 rounded font-bold">APP-2847</span>
-                                </div>
-                            </div>
-
-                            {sessionComplete && (
-                                <div className="mx-3 mt-2 p-3 rounded-xl bg-[#ecfdf5] border border-[#25D366] flex items-center gap-2 fade-in shrink-0">
-                                    <i className="fa-brands fa-whatsapp text-xl text-[#25D366]"></i>
-                                    <a href={WA_LINK} className="text-xs font-bold text-[#166534] flex-1">Open WhatsApp recap →</a>
-                                </div>
-                            )}
-
-                            {renderScreen()}
-
-                            <nav className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-2 pb-5 shrink-0">
-                                {tabs.map(t => (
-                                    <button key={t.id} type="button"
-                                        onClick={() => { if (t.id === 'mortgage') openChat(); else setScreen('home'); }}
-                                        className={`flex flex-col items-center gap-0.5 text-[9px] font-semibold ${(t.id === 'mortgage' || screen !== 'home') && t.id === 'mortgage' ? 'text-[#00A3A1]' : 'text-gray-400'}`}>
-                                        <i className={`fa-solid ${t.icon} text-lg`}></i>
-                                        {t.label}
-                                    </button>
-                                ))}
-                            </nav>
-
-                            {!chatOpen && !sessionComplete && (
-                                <button type="button" onClick={openChat}
-                                    className="absolute bottom-20 right-4 w-14 h-14 rounded-full bg-[#0B3D5C] text-white shadow-xl flex items-center justify-center border-2 border-[#00A3A1]">
-                                    <img src={AGENT_ICON} alt="" className="w-8 h-8 rounded-full bg-white p-0.5 object-contain" />
-                                </button>
-                            )}
-
-                            {chatOpen && (
-                                <div className="absolute inset-0 z-20 flex flex-col justify-end bg-black/30" onClick={() => !sessionComplete && setChatOpen(false)}>
-                                    <div className="chat-sheet bg-white rounded-t-3xl flex flex-col max-h-[78%] shadow-2xl" onClick={e => e.stopPropagation()}>
-                                        <div className="px-4 py-3 bg-[#0B3D5C] text-white flex justify-between rounded-t-3xl shrink-0">
-                                            <div className="flex items-center gap-2">
-                                                <img src={AGENT_ICON} alt="" className="w-7 h-7 bg-white rounded-full p-0.5 object-contain" />
-                                                <span className="font-bold text-sm">Agentforce</span>
-                                            </div>
-                                            <button type="button" onClick={() => setChatOpen(false)} className="w-8 h-8 rounded-full hover:bg-white/15"><i className="fa-solid fa-xmark"></i></button>
+                            {phase === 'push' && <PushScreen onOpen={() => setPhase('recap')} />}
+                            {phase === 'recap' && <CallRecapScreen onContinue={() => setPhase('chat')} />}
+                            {phase === 'chat' && (
+                                <div className="flex-1 flex flex-col bg-[#f4f6f8] overflow-hidden min-h-0">
+                                    <StatusBar dark={false} />
+                                    <div className="bg-[#0B3D5C] text-white px-4 py-2.5 flex items-center gap-2 shrink-0">
+                                        <img src={AGENT_ICON} alt="" className="w-8 h-8 bg-white rounded-full p-0.5 object-contain" />
+                                        <div>
+                                            <p className="text-sm font-bold leading-tight">Agentforce</p>
+                                            <p className="text-[10px] text-[#7ee8e0]">In-app · APP-2847</p>
                                         </div>
-                                        <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-[#f6f8fc] min-h-[200px]">
-                                            {isConnecting && <p className="text-xs text-gray-500 pl-2">Connecting…</p>}
-                                            {messages.map((m, i) => (
-                                                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : ''} fade-in`}>
-                                                    {m.role === 'agent' && <img src={AGENT_ICON} alt="" className="w-6 h-6 mr-2 mt-1 rounded-full border bg-white p-0.5 object-contain shrink-0" />}
-                                                    <div className="max-w-[88%]">
-                                                        <div className={`text-[12px] px-3 py-2 rounded-2xl ${m.role === 'user' ? 'bg-[#00A3A1] text-white' : 'bg-white border'}`}
-                                                            dangerouslySetInnerHTML={{ __html: m.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }} />
-                                                        {m.options?.map((o, j) => (
-                                                            <button key={j} type="button" disabled={waOfferChoice} onClick={() => handleWaOffer(o)}
-                                                                className="mt-1.5 w-full text-left text-[11px] border border-[#00A3A1] rounded-lg px-3 py-2 bg-white">
-                                                                <i className="fa-brands fa-whatsapp text-[#25D366] mr-1"></i>{o}
-                                                            </button>
-                                                        ))}
-                                                        {m.type === 'whatsapp_handoff' && (
-                                                            <a href={WA_LINK} className="mt-2 inline-flex gap-2 bg-[#25D366] text-white text-[11px] font-bold px-3 py-2 rounded-lg">
-                                                                <i className="fa-brands fa-whatsapp"></i> Open WhatsApp
-                                                            </a>
-                                                        )}
-                                                    </div>
-                                                    {m.role === 'user' && <span className="w-6 h-6 ml-2 bg-blue-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center shrink-0">M</span>}
+                                    </div>
+
+                                    <LoanSummaryCard loan={loan} />
+
+                                    {sessionComplete && (
+                                        <div className="mx-3 mb-2 p-2.5 rounded-xl bg-[#ecfdf5] border border-[#25D366] flex items-center gap-2 fade-in shrink-0">
+                                            <i className="fa-brands fa-whatsapp text-lg text-[#25D366]"></i>
+                                            <a href={WA_LINK} className="text-xs font-bold text-[#166534]">Open WhatsApp recap →</a>
+                                        </div>
+                                    )}
+
+                                    <div className="flex-1 overflow-y-auto px-3 space-y-2 min-h-0">
+                                        {isConnecting && <p className="text-xs text-gray-500 pl-1">Connecting with Agentforce…</p>}
+                                        {messages.map((m, i) => (
+                                            <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : ''} fade-in`}>
+                                                {m.role === 'agent' && <img src={AGENT_ICON} alt="" className="w-6 h-6 mr-1.5 mt-1 rounded-full border bg-white p-0.5 object-contain shrink-0" />}
+                                                <div className="max-w-[88%]">
+                                                    <div className={`text-[12px] px-3 py-2 rounded-2xl leading-relaxed ${m.role === 'user' ? 'bg-[#00A3A1] text-white' : 'bg-white border border-gray-200'}`}
+                                                        dangerouslySetInnerHTML={{ __html: m.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }} />
+                                                    {m.options?.map((o, j) => (
+                                                        <button key={j} type="button" disabled={waOfferChoice} onClick={() => handleWaOffer(o)}
+                                                            className="mt-1.5 w-full text-left text-[11px] border border-[#00A3A1] rounded-lg px-3 py-2 bg-white">
+                                                            <i className="fa-brands fa-whatsapp text-[#25D366] mr-1"></i>{o}
+                                                        </button>
+                                                    ))}
+                                                    {m.type === 'whatsapp_handoff' && (
+                                                        <a href={WA_LINK} className="mt-2 inline-flex gap-2 bg-[#25D366] text-white text-[11px] font-bold px-3 py-2 rounded-lg">
+                                                            <i className="fa-brands fa-whatsapp"></i> Open WhatsApp
+                                                        </a>
+                                                    )}
                                                 </div>
-                                            ))}
-                                            {isTyping && <p className="text-[10px] text-gray-400 pl-8">Agentforce is typing…</p>}
-                                            <div ref={chatEndRef} />
+                                                {m.role === 'user' && <span className="w-6 h-6 ml-1.5 bg-blue-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center shrink-0">M</span>}
+                                            </div>
+                                        ))}
+                                        {isTyping && <p className="text-[10px] text-gray-400 pl-8">Agentforce is typing…</p>}
+                                        <div ref={chatEndRef} />
+                                    </div>
+
+                                    <div className="shrink-0 bg-[#f4f6f8] border-t border-gray-200">
+                                        <div className="px-3 py-2 flex items-end gap-2">
+                                            <div className="flex-1 chat-input-mock px-3 py-2 text-[13px] text-gray-800 min-h-[36px] flex items-center">
+                                                <span ref={inputRef} className={inputText ? 'text-gray-900' : 'text-gray-400'}>
+                                                    {inputText || (isConnecting ? 'Connecting…' : sessionComplete ? 'Continued on WhatsApp' : 'Message Agentforce…')}
+                                                </span>
+                                                {isSimulatingInput && <span className="inline-block w-0.5 h-4 bg-[#00A3A1] ml-0.5 animate-pulse" />}
+                                            </div>
+                                            <button type="button" disabled={!inputText.trim()}
+                                                className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${inputText.trim() ? 'bg-[#0B3D5C] text-white' : 'bg-gray-300 text-gray-500'}`}>
+                                                <i className="fa-solid fa-paper-plane text-[10px]"></i>
+                                            </button>
                                         </div>
-                                        <div className="p-3 border-t bg-white text-center text-[10px] text-gray-400 shrink-0">
-                                            Press any key to advance · Mobile demo
-                                        </div>
+                                        {keyboardVisible && <IOSKeyboard />}
+                                        {!keyboardVisible && !sessionComplete && (
+                                            <p className="text-center text-[9px] text-gray-400 pb-2">Press any key to type &amp; send</p>
+                                        )}
                                     </div>
                                 </div>
                             )}
                         </div>
                     </div>
-                    {!chatOpen && <div className="demo-hint">Press any key to open Agentforce chat</div>}
                 </div>
             );
         }
