@@ -13,17 +13,67 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        html, body { margin: 0; height: 100%; overflow: hidden; font-family: Montserrat, system-ui, sans-serif; background: #d1d5db; }
+        html, body { margin: 0; height: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', Montserrat, system-ui, sans-serif; background: #d1d5db; }
         .phone-stage { height: 100vh; height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; }
         .phone-frame {
             width: 390px; height: min(844px, calc(100dvh - 20px)); max-height: calc(100dvh - 20px);
             border-radius: 48px; border: 12px solid #1a1a1a; background: #000;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.45); overflow: hidden; display: flex; flex-direction: column;
         }
-        .phone-screen { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; background: #000; }
-        .wallpaper { background: linear-gradient(160deg, #1e3a5f 0%, #0B3D5C 40%, #072a3f 100%); }
-        .push-banner { animation: pushDrop 0.5s cubic-bezier(0.34, 1.4, 0.64, 1) forwards; }
-        @keyframes pushDrop { from { opacity: 0; transform: translateY(-120%); } to { opacity: 1; transform: translateY(0); } }
+        .phone-screen { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; background: #000; border-radius: 36px; }
+        .ios-lock-wallpaper {
+            background:
+                radial-gradient(ellipse 90% 70% at 15% 10%, rgba(0, 163, 161, 0.35), transparent 55%),
+                radial-gradient(ellipse 80% 60% at 85% 85%, rgba(30, 90, 140, 0.55), transparent 50%),
+                radial-gradient(ellipse 50% 40% at 50% 50%, rgba(7, 42, 63, 0.4), transparent),
+                linear-gradient(168deg, #2a6a8a 0%, #0B3D5C 28%, #062535 62%, #0a2840 100%);
+        }
+        .dynamic-island {
+            width: 126px; height: 37px; background: #000; border-radius: 22px;
+            margin: 10px auto 0; box-shadow: 0 0 0 1px rgba(255,255,255,0.06);
+        }
+        .ios-notification {
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(28px) saturate(190%);
+            -webkit-backdrop-filter: blur(28px) saturate(190%);
+            border-radius: 20px;
+            box-shadow:
+                0 12px 40px rgba(0, 0, 0, 0.22),
+                0 1px 0 rgba(255, 255, 255, 0.65) inset,
+                0 0 0 0.5px rgba(255, 255, 255, 0.25);
+        }
+        .ios-notification.entering {
+            animation: iosNotifIn 0.72s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+        @keyframes iosNotifIn {
+            0% { opacity: 0; transform: translateY(-36px) scale(0.86); filter: blur(6px); }
+            45% { opacity: 1; transform: translateY(8px) scale(1.025); filter: blur(0); }
+            70% { transform: translateY(-3px) scale(0.995); }
+            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+        .ios-lock-time {
+            font-size: 82px; font-weight: 200; letter-spacing: -3px; line-height: 1;
+            color: rgba(255,255,255,0.92);
+            text-shadow: 0 2px 24px rgba(0,0,0,0.25);
+        }
+        .lock-control {
+            width: 50px; height: 50px; border-radius: 50%;
+            background: rgba(0,0,0,0.38); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+        .home-indicator {
+            width: 134px; height: 5px; background: rgba(255,255,255,0.88);
+            border-radius: 100px; margin: 0 auto 10px;
+        }
+        .home-indicator-dark { background: rgba(0,0,0,0.28); }
+        .agent-fab {
+            box-shadow: 0 12px 32px rgba(11, 61, 92, 0.45), 0 0 0 3px rgba(0, 163, 161, 0.35);
+            animation: fabPulse 2.4s ease-in-out infinite;
+        }
+        @keyframes fabPulse {
+            0%, 100% { box-shadow: 0 12px 32px rgba(11, 61, 92, 0.45), 0 0 0 3px rgba(0, 163, 161, 0.35); }
+            50% { box-shadow: 0 16px 40px rgba(0, 163, 161, 0.5), 0 0 0 5px rgba(0, 163, 161, 0.2); }
+        }
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .ios-keyboard {
@@ -40,6 +90,7 @@
         const { useState, useEffect, useRef } = React;
 
         const AGENT_ICON = 'assets/cumulus-icon.png';
+        const AGENTFORCE_ICON = 'assets/agentforce_icon.webp';
         const WA_LINK = 'agenticWhatsappCumulusMortgageEN.html?from=mobile';
         const TYPING_BASE_MS = 32;
         const TYPING_JITTER_MS = 20;
@@ -72,11 +123,25 @@
 
         function StatusBar({ dark }) {
             return (
-                <div className={`shrink-0 px-5 pt-3 pb-1 flex justify-between text-[11px] font-semibold ${dark ? 'text-white' : 'text-gray-900'}`}>
+                <div className={`shrink-0 px-6 pt-1 pb-0 flex justify-between items-center text-[15px] font-semibold tracking-tight ${dark ? 'text-white' : 'text-gray-900'}`}>
                     <span>9:41</span>
-                    <span><i className="fa-solid fa-signal"></i> <i className="fa-solid fa-wifi ml-1"></i> <i className="fa-solid fa-battery-full ml-1"></i></span>
+                    <span className="flex items-center gap-[5px] text-[13px]">
+                        <i className="fa-solid fa-signal"></i>
+                        <i className="fa-solid fa-wifi"></i>
+                        <span className="inline-flex items-center gap-0.5">
+                            <i className="fa-solid fa-battery-full text-[15px]"></i>
+                        </span>
+                    </span>
                 </div>
             );
+        }
+
+        function DynamicIsland() {
+            return <div className="dynamic-island shrink-0" aria-hidden="true" />;
+        }
+
+        function HomeIndicator({ dark }) {
+            return <div className={`home-indicator shrink-0 ${dark ? 'home-indicator-dark' : ''}`} aria-hidden="true" />;
         }
 
         function LoanSummaryCard({ loan }) {
@@ -125,77 +190,104 @@
         }
 
         function PushScreen({ onOpen }) {
+            const [showNotif, setShowNotif] = useState(false);
+
+            useEffect(() => {
+                const t = setTimeout(() => setShowNotif(true), 800);
+                return () => clearTimeout(t);
+            }, []);
+
             return (
-                <div className="wallpaper flex-1 flex flex-col">
+                <div className="ios-lock-wallpaper flex-1 flex flex-col min-h-0">
+                    <DynamicIsland />
                     <StatusBar dark />
-                    <div className="flex-1 flex flex-col items-center justify-end pb-16 px-6">
-                        <p className="text-white/50 text-xs mb-8">Tuesday, June 9</p>
-                        <p className="text-white/70 text-5xl font-light mb-auto mt-20">9:41</p>
+
+                    <div className="text-center pt-1 shrink-0">
+                        <p className="text-white/80 text-[15px] font-medium">Tuesday, June 9</p>
+                        <p className="ios-lock-time mt-1">9:41</p>
                     </div>
-                    <div className="px-3 pb-3">
-                        <button type="button" onClick={onOpen}
-                            className="push-banner w-full text-left bg-white/95 backdrop-blur rounded-2xl p-3 shadow-xl flex gap-3">
-                            <img src={AGENT_ICON} alt="" className="w-10 h-10 rounded-xl object-contain bg-[#f0f9f8] p-1 shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[11px] font-bold text-gray-500 uppercase">Cumulus</span>
-                                    <span className="text-[10px] text-gray-400">now</span>
+
+                    <div className="flex-1 flex items-center justify-center px-5 min-h-0">
+                        {showNotif && (
+                            <button type="button" onClick={onOpen}
+                                className="ios-notification entering w-full max-w-[348px] p-3.5 flex gap-3 text-left active:scale-[0.97] transition-transform duration-150">
+                                <img src={AGENT_ICON} alt="" className="w-11 h-11 rounded-[12px] object-contain bg-white p-1 shrink-0 shadow-sm" />
+                                <div className="flex-1 min-w-0 pt-0.5">
+                                    <div className="flex justify-between items-baseline gap-2 mb-0.5">
+                                        <span className="text-[13px] font-semibold text-gray-900">CUMULUS</span>
+                                        <span className="text-[12px] text-gray-500 shrink-0">now</span>
+                                    </div>
+                                    <p className="text-[15px] font-semibold text-gray-900 leading-snug">Your call summary is ready</p>
+                                    <p className="text-[14px] text-gray-600 leading-snug mt-0.5 line-clamp-2">David Martinez · APP-2847 · tap to open</p>
                                 </div>
-                                <p className="text-sm font-bold text-gray-900 truncate">Your call summary is ready</p>
-                                <p className="text-xs text-gray-600 truncate">David Martinez · APP-2847 · tap to continue</p>
-                            </div>
-                        </button>
-                        <p className="text-center text-white/60 text-[10px] mt-3">Tap notification or press any key</p>
+                            </button>
+                        )}
                     </div>
+
+                    <div className="shrink-0 px-12 pb-1 flex justify-between items-center">
+                        <div className="lock-control flex items-center justify-center">
+                            <i className="fa-solid fa-flashlight text-white/90 text-[17px]"></i>
+                        </div>
+                        <div className="lock-control flex items-center justify-center">
+                            <i className="fa-solid fa-camera text-white/90 text-[17px]"></i>
+                        </div>
+                    </div>
+                    <HomeIndicator />
+                    <p className="text-center text-white/45 text-[9px] pb-2 shrink-0">Tap notification or press any key</p>
                 </div>
             );
         }
 
         function CallRecapScreen({ onContinue }) {
             return (
-                <div className="flex-1 flex flex-col bg-[#f4f6f8] overflow-hidden">
+                <div className="flex-1 flex flex-col bg-[#f2f2f7] overflow-hidden min-h-0 relative">
+                    <DynamicIsland />
                     <StatusBar dark={false} />
-                    <div className="bg-[#0B3D5C] text-white px-4 py-3 shrink-0">
-                        <div className="flex items-center gap-3">
-                            <button type="button" className="text-white/80"><i className="fa-solid fa-chevron-left"></i></button>
-                            <div>
-                                <p className="text-sm font-bold">Call summary</p>
-                                <p className="text-[10px] text-[#7ee8e0]">Synced to your Cumulus app</p>
+                    <div className="bg-white/90 backdrop-blur border-b border-gray-200/80 px-4 py-2.5 shrink-0">
+                        <div className="flex items-center gap-2">
+                            <button type="button" className="text-[#007AFF] text-sm w-8"><i className="fa-solid fa-chevron-left"></i></button>
+                            <div className="flex-1 text-center pr-8">
+                                <p className="text-[15px] font-semibold text-gray-900">Call summary</p>
+                                <p className="text-[11px] text-gray-500">Cumulus · synced from phone call</p>
                             </div>
                         </div>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-4 pb-6">
-                        <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm fade-in">
+                    <div className="flex-1 overflow-y-auto p-4 pb-28 min-h-0">
+                        <div className="bg-white rounded-[14px] p-4 shadow-sm fade-in">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="w-12 h-12 rounded-full bg-[#0B3D5C] flex items-center justify-center text-white">
+                                <div className="w-12 h-12 rounded-full bg-[#0B3D5C] flex items-center justify-center text-white shadow-md">
                                     <i className="fa-solid fa-phone text-lg"></i>
                                 </div>
                                 <div>
-                                    <p className="font-bold text-[#0B3D5C]">{CALL_RECAP.advisor}</p>
-                                    <p className="text-xs text-gray-500">Loan specialist · {CALL_RECAP.duration}</p>
-                                    <p className="text-[10px] text-gray-400">{CALL_RECAP.when}</p>
+                                    <p className="font-semibold text-[15px] text-gray-900">{CALL_RECAP.advisor}</p>
+                                    <p className="text-[13px] text-gray-500">Loan specialist · {CALL_RECAP.duration}</p>
+                                    <p className="text-[11px] text-gray-400">{CALL_RECAP.when}</p>
                                 </div>
                             </div>
-                            <p className="text-xs text-gray-500 mb-3 font-semibold uppercase tracking-wide">Discussed on the call</p>
+                            <p className="text-[11px] text-gray-400 mb-2.5 font-semibold uppercase tracking-wide">Discussed on the call</p>
                             <ul className="space-y-2.5">
                                 {CALL_RECAP.bullets.map((b, i) => (
-                                    <li key={i} className="text-sm text-gray-700 flex gap-2">
-                                        <span className="text-[#00A3A1] shrink-0">•</span>
+                                    <li key={i} className="text-[14px] text-gray-700 flex gap-2 leading-snug">
+                                        <span className="text-[#00A3A1] shrink-0 mt-0.5">•</span>
                                         <span dangerouslySetInnerHTML={{ __html: b.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
                                     </li>
                                 ))}
                             </ul>
                         </div>
-                        <p className="text-xs text-gray-500 mt-4 text-center leading-relaxed">
-                            This is what you covered by phone — not a web page. Agentforce can help you <strong>adjust term &amp; payment</strong> next.
+                        <p className="text-[12px] text-gray-500 mt-4 text-center leading-relaxed px-2">
+                            Covered by phone — Agentforce can help you <strong>adjust term &amp; payment</strong> next.
                         </p>
                     </div>
-                    <div className="p-4 bg-white border-t border-gray-200 shrink-0">
-                        <button type="button" onClick={onContinue}
-                            className="w-full py-3.5 rounded-xl bg-[#0B3D5C] text-white font-bold text-sm shadow-lg">
-                            Continue with Agentforce
-                        </button>
-                        <p className="text-center text-[10px] text-gray-400 mt-2">Press any key</p>
+
+                    <div className="absolute bottom-0 left-0 right-0 pb-2 pt-6 bg-gradient-to-t from-[#f2f2f7] via-[#f2f2f7] to-transparent pointer-events-none">
+                        <div className="flex justify-center pointer-events-auto">
+                            <button type="button" onClick={onContinue} aria-label="Open Agentforce"
+                                className="agent-fab w-[68px] h-[68px] rounded-full bg-[#0B3D5C] flex items-center justify-center active:scale-95 transition-transform">
+                                <img src={AGENTFORCE_ICON} alt="Agentforce" className="w-10 h-10 object-contain" />
+                            </button>
+                        </div>
+                        <p className="text-center text-[10px] text-gray-400 mt-3 pointer-events-none">Tap Agentforce or press any key</p>
+                        <HomeIndicator dark />
                     </div>
                 </div>
             );
@@ -402,13 +494,14 @@
                             {phase === 'push' && <PushScreen onOpen={() => setPhase('recap')} />}
                             {phase === 'recap' && <CallRecapScreen onContinue={() => setPhase('chat')} />}
                             {phase === 'chat' && (
-                                <div className="flex-1 flex flex-col bg-[#f4f6f8] overflow-hidden min-h-0">
+                                <div className="flex-1 flex flex-col bg-[#f2f2f7] overflow-hidden min-h-0 relative">
+                                    <DynamicIsland />
                                     <StatusBar dark={false} />
-                                    <div className="bg-[#0B3D5C] text-white px-4 py-2.5 flex items-center gap-2 shrink-0">
-                                        <img src={AGENT_ICON} alt="" className="w-8 h-8 bg-white rounded-full p-0.5 object-contain" />
+                                    <div className="bg-white border-b border-gray-200/80 px-4 py-2.5 flex items-center gap-2 shrink-0">
+                                        <img src={AGENTFORCE_ICON} alt="" className="w-8 h-8 object-contain" />
                                         <div>
-                                            <p className="text-sm font-bold leading-tight">Agentforce</p>
-                                            <p className="text-[10px] text-[#7ee8e0]">In-app · APP-2847</p>
+                                            <p className="text-[15px] font-semibold text-gray-900 leading-tight">Agentforce</p>
+                                            <p className="text-[11px] text-gray-500">In-app · APP-2847</p>
                                         </div>
                                     </div>
 
@@ -425,7 +518,7 @@
                                         {isConnecting && <p className="text-xs text-gray-500 pl-1">Connecting with Agentforce…</p>}
                                         {messages.map((m, i) => (
                                             <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : ''} fade-in`}>
-                                                {m.role === 'agent' && <img src={AGENT_ICON} alt="" className="w-6 h-6 mr-1.5 mt-1 rounded-full border bg-white p-0.5 object-contain shrink-0" />}
+                                                {m.role === 'agent' && <img src={AGENTFORCE_ICON} alt="" className="w-6 h-6 mr-1.5 mt-1 object-contain shrink-0" />}
                                                 <div className="max-w-[88%]">
                                                     <div className={`text-[12px] px-3 py-2 rounded-2xl leading-relaxed ${m.role === 'user' ? 'bg-[#00A3A1] text-white' : 'bg-white border border-gray-200'}`}
                                                         dangerouslySetInnerHTML={{ __html: m.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br/>') }} />
@@ -448,7 +541,7 @@
                                         <div ref={chatEndRef} />
                                     </div>
 
-                                    <div className="shrink-0 bg-[#f4f6f8] border-t border-gray-200">
+                                    <div className="shrink-0 bg-[#f2f2f7] border-t border-gray-200">
                                         <div className="px-3 py-2 flex items-end gap-2">
                                             <div className="flex-1 chat-input-mock px-3 py-2 text-[13px] text-gray-800 min-h-[36px] flex items-center">
                                                 <span ref={inputRef} className={inputText ? 'text-gray-900' : 'text-gray-400'}>
@@ -463,8 +556,9 @@
                                         </div>
                                         {keyboardVisible && <IOSKeyboard />}
                                         {!keyboardVisible && !sessionComplete && (
-                                            <p className="text-center text-[9px] text-gray-400 pb-2">Press any key to type &amp; send</p>
+                                            <p className="text-center text-[9px] text-gray-400 pb-1">Press any key to type &amp; send</p>
                                         )}
+                                        <HomeIndicator dark />
                                     </div>
                                 </div>
                             )}
