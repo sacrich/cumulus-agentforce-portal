@@ -9,6 +9,7 @@ Mortgage / first-time buyer story: Marcus & Emily · **APP-2847** · separate fr
 | Portal | `index.html` |
 | Email | `agenticEmailCumulusEN.html` |
 | Web | `agenticwebCumulusEN.html` |
+| Mobile app | `agenticMobileCumulusEN.html` |
 | WhatsApp | `agenticWhatsappCumulusMortgageEN.html` |
 | Data Cloud | `fichaclienteCumulusEN.html` |
 
