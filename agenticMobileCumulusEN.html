@@ -86,35 +86,35 @@
             border-color: #00A3A1;
             box-shadow: 0 0 0 2px rgba(0, 163, 161, 0.15);
         }
-        .chat-input-field {
+        .chat-input-faux {
             width: 100%;
-            border: 0;
-            outline: none;
-            resize: none;
-            background: transparent;
-            font-family: inherit;
+            min-height: 20px;
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
             font-size: 13px;
             line-height: 1.35;
-            color: #111827;
-            caret-color: #007AFF;
-            padding: 0;
-            margin: 0;
-            min-height: 20px;
-            max-height: 88px;
-            overflow-y: auto;
         }
-        .chat-input-field::placeholder { color: #9ca3af; }
-        .chat-input-field { cursor: text; }
+        .chat-input-value {
+            color: #111827;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .chat-input-placeholder {
+            color: #9ca3af;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         .chat-input-caret {
-            position: absolute;
-            left: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 2px;
-            height: 17px;
+            display: inline-block;
+            width: 3px;
+            height: 18px;
             background: #007AFF;
             border-radius: 1px;
-            pointer-events: none;
+            flex-shrink: 0;
+            margin-right: 2px;
+            vertical-align: middle;
             animation: caretBlink 1.05s step-end infinite;
         }
         @keyframes caretBlink {
@@ -369,7 +369,6 @@
             const chatGreetedRef = useRef(false);
             const phaseRef = useRef('push');
             const stageRef = useRef(null);
-            const inputFieldRef = useRef(null);
             const chatEndRef = useRef(null);
 
             const AGENT_GREETING = {
@@ -615,20 +614,6 @@
                     : 'Message Agentforce…';
             const showInputCaret = !sessionComplete && !isConnecting && !isTyping;
 
-            const focusChatInput = () => {
-                const el = inputFieldRef.current;
-                if (!el || sessionComplete || isConnecting || isTyping) return;
-                el.focus({ preventScroll: true });
-                const len = el.value.length;
-                try { el.setSelectionRange(len, len); } catch (_) { /* ignore */ }
-            };
-
-            useEffect(() => {
-                if (phase !== 'chat') return;
-                const t = setTimeout(focusChatInput, 40);
-                return () => clearTimeout(t);
-            }, [phase, sessionComplete, isConnecting, isTyping, chatGreeted, inputText, isSimulatingInput]);
-
             return (
                 <div className="phone-stage" ref={stageRef} tabIndex={0} aria-label="Cumulus mobile demo — press arrow keys to advance">
                     <div className="phone-frame">
@@ -695,24 +680,19 @@
                                     <div className="shrink-0 bg-[#f2f2f7] border-t border-gray-200">
                                         <div className="px-3 py-2 flex items-end gap-2">
                                             <div className={`flex-1 chat-input-mock px-3 py-2 flex items-center ${showInputCaret ? 'is-active' : ''}`}>
-                                                {showInputCaret && !inputText && (
-                                                    <span className="chat-input-caret" aria-hidden="true" />
-                                                )}
-                                                <textarea
-                                                    ref={inputFieldRef}
-                                                    value={inputText}
-                                                    placeholder={inputPlaceholder}
-                                                    rows={1}
-                                                    className="chat-input-field"
-                                                    aria-label="Message Agentforce"
-                                                    onChange={() => {}}
-                                                    onKeyDown={(e) => e.preventDefault()}
-                                                    onPaste={(e) => e.preventDefault()}
-                                                    onFocus={(e) => {
-                                                        const len = e.target.value.length;
-                                                        try { e.target.setSelectionRange(len, len); } catch (_) { /* ignore */ }
-                                                    }}
-                                                />
+                                                <div className="chat-input-faux" aria-label="Message Agentforce">
+                                                    {showInputCaret && !inputText && (
+                                                        <span className="chat-input-caret" aria-hidden="true" />
+                                                    )}
+                                                    {inputText ? (
+                                                        <span className="chat-input-value">{inputText}</span>
+                                                    ) : (
+                                                        <span className="chat-input-placeholder">{inputPlaceholder}</span>
+                                                    )}
+                                                    {showInputCaret && inputText && (
+                                                        <span className="chat-input-caret" aria-hidden="true" />
+                                                    )}
+                                                </div>
                                             </div>
                                             <button type="button" disabled={!inputText.trim()}
                                                 className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${inputText.trim() ? 'bg-[#0B3D5C] text-white' : 'bg-gray-300 text-gray-500'}`}>
