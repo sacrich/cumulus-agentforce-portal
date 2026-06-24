@@ -336,11 +336,25 @@
             const typingTextRef = useRef('');
             const typingNextStepRef = useRef(0);
             const typingFlushRef = useRef(false);
+            const connectTimeoutRef = useRef(null);
+            const chatGreetedRef = useRef(false);
+            const phaseRef = useRef('push');
+            const stageRef = useRef(null);
             const chatEndRef = useRef(null);
+
+            const AGENT_GREETING = {
+                role: 'agent',
+                text: 'Hi Marcus — I pulled in your **call with David**. You\'re on **APP-2847**: 30-yr conventional, about **$2,640/mo**.\n\nWant to try a **shorter term** or a **target monthly payment**? I\'ll update your estimate right here — no website needed.',
+            };
 
             useEffect(() => { demoStepRef.current = demoStep; }, [demoStep]);
             useEffect(() => { isSimulatingRef.current = isSimulatingInput; }, [isSimulatingInput]);
             useEffect(() => { isTypingRef.current = isTyping; }, [isTyping]);
+            useEffect(() => { chatGreetedRef.current = chatGreeted; }, [chatGreeted]);
+            useEffect(() => { phaseRef.current = phase; }, [phase]);
+            useEffect(() => {
+                stageRef.current?.focus({ preventScroll: true });
+            }, [phase]);
             useEffect(() => {
                 if (phase === 'chat') chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
             }, [messages, isTyping, inputText, phase, keyboardVisible]);
@@ -348,17 +362,29 @@
             useEffect(() => {
                 if (phase !== 'chat' || chatGreeted) return;
                 setIsConnecting(true);
-                const t = setTimeout(() => {
+                connectTimeoutRef.current = setTimeout(() => {
+                    connectTimeoutRef.current = null;
                     setIsConnecting(false);
-                    setMessages([{
-                        role: 'agent',
-                        text: 'Hi Marcus — I pulled in your **call with David**. You\'re on **APP-2847**: 30-yr conventional, about **$2,640/mo**.\n\nWant to try a **shorter term** or a **target monthly payment**? I\'ll update your estimate right here — no website needed.',
-                    }]);
+                    setMessages([AGENT_GREETING]);
                     setDemoStep(1);
                     setChatGreeted(true);
                 }, CHAT_CONNECT_MS);
-                return () => clearTimeout(t);
+                return () => {
+                    if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current);
+                };
             }, [phase, chatGreeted]);
+
+            const completeChatGreeting = () => {
+                if (chatGreetedRef.current) return;
+                if (connectTimeoutRef.current) {
+                    clearTimeout(connectTimeoutRef.current);
+                    connectTimeoutRef.current = null;
+                }
+                setIsConnecting(false);
+                setMessages([AGENT_GREETING]);
+                setDemoStep(1);
+                setChatGreeted(true);
+            };
 
             const queueAgent = (fn) => {
                 pendingAgentFnRef.current = fn;
@@ -499,9 +525,10 @@
             };
 
             const handleDemoKey = () => {
-                if (phase === 'push') { setPhase('recap'); return; }
-                if (phase === 'recap') { setPhase('chat'); return; }
-                if (sessionComplete || isConnecting) return;
+                const p = phaseRef.current;
+                if (p === 'push') { setPhase('recap'); return; }
+                if (p === 'recap') { setPhase('chat'); return; }
+                if (sessionComplete) return;
 
                 const s = demoStepRef.current;
                 if (DEMO_USER_LINES[s]) {
@@ -520,7 +547,6 @@
 
                     if (isSimulatingRef.current) {
                         e.preventDefault();
-                        skipTypingRef.current = true;
                         finishTypingAndSend(typingTextRef.current, typingNextStepRef.current);
                         return;
                     }
@@ -531,13 +557,20 @@
                         return;
                     }
 
-                    if (sessionComplete || isConnecting) return;
+                    if (phaseRef.current === 'chat' && !chatGreetedRef.current) {
+                        e.preventDefault();
+                        completeChatGreeting();
+                        return;
+                    }
+
+                    if (sessionComplete) return;
                     e.preventDefault();
                     handleDemoKey();
                 };
                 window.addEventListener('keydown', onKey, true);
+                stageRef.current?.focus({ preventScroll: true });
                 return () => window.removeEventListener('keydown', onKey, true);
-            }, [phase, sessionComplete, isConnecting, waOfferChoice]);
+            }, [sessionComplete, waOfferChoice]);
 
             useEffect(() => {
                 demoTypingStartedRef.current = false;
@@ -545,7 +578,7 @@
             }, [demoStep]);
 
             return (
-                <div className="phone-stage">
+                <div className="phone-stage" ref={stageRef} tabIndex={0} aria-label="Cumulus mobile demo — press arrow keys to advance">
                     <div className="phone-frame">
                         <div className="phone-screen">
                             {phase === 'push' && <PushScreen onOpen={() => setPhase('recap')} />}
