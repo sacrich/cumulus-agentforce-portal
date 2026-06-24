@@ -81,16 +81,22 @@
             flex-shrink: 0;
         }
         .ios-key { background: #fff; border-radius: 5px; box-shadow: 0 1px 0 #898a8d; font-size: 17px; font-weight: 400; }
-        .chat-input-mock { background: #fff; border: 1px solid #c7c7cc; border-radius: 20px; min-height: 36px; }
+        .chat-input-mock { background: #fff; border: 1px solid #c7c7cc; border-radius: 20px; min-height: 36px; transition: border-color 0.15s, box-shadow 0.15s; }
+        .chat-input-mock.is-active {
+            border-color: #00A3A1;
+            box-shadow: 0 0 0 2px rgba(0, 163, 161, 0.15);
+        }
         .typing-cursor {
             display: inline-block;
             width: 2px;
-            height: 1em;
-            background: #00A3A1;
-            margin-left: 1px;
+            height: 18px;
+            background: #007AFF;
+            margin-right: 1px;
+            flex-shrink: 0;
             vertical-align: text-bottom;
-            animation: cursorBlink 0.85s step-end infinite;
+            animation: cursorBlink 1s step-end infinite;
         }
+        .typing-cursor.at-end { margin-right: 0; margin-left: 1px; }
         @keyframes cursorBlink { 50% { opacity: 0; } }
         .typing-dot { animation: typingBounce 1.4s infinite ease-in-out both; }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
@@ -577,6 +583,13 @@
                 demoLockRef.current = false;
             }, [demoStep]);
 
+            const inputPlaceholder = isConnecting
+                ? 'Connecting…'
+                : sessionComplete
+                    ? 'Continued on WhatsApp'
+                    : 'Message Agentforce…';
+            const showInputCaret = !sessionComplete && !isConnecting && !isTyping;
+
             return (
                 <div className="phone-stage" ref={stageRef} tabIndex={0} aria-label="Cumulus mobile demo — press arrow keys to advance">
                     <div className="phone-frame">
@@ -642,15 +655,22 @@
 
                                     <div className="shrink-0 bg-[#f2f2f7] border-t border-gray-200">
                                         <div className="px-3 py-2 flex items-end gap-2">
-                                            <div className="flex-1 chat-input-mock px-3 py-2 text-[13px] text-gray-800 min-h-[36px] leading-snug">
-                                                {inputText ? (
-                                                    <span className="text-gray-900 whitespace-pre-wrap break-words">{inputText}</span>
-                                                ) : (
-                                                    <span className="text-gray-400">
-                                                        {isConnecting ? 'Connecting…' : sessionComplete ? 'Continued on WhatsApp' : 'Message Agentforce…'}
-                                                    </span>
-                                                )}
-                                                {isSimulatingInput && <span className="typing-cursor" aria-hidden="true" />}
+                                            <div className={`flex-1 chat-input-mock px-3 py-2 text-[13px] text-gray-800 min-h-[36px] leading-snug flex items-center ${showInputCaret ? 'is-active' : ''}`}>
+                                                <div className="flex flex-wrap items-baseline flex-1 min-w-0">
+                                                    {showInputCaret && !inputText && (
+                                                        <span className="typing-cursor" aria-hidden="true" />
+                                                    )}
+                                                    {inputText ? (
+                                                        <>
+                                                            <span className="text-gray-900 whitespace-pre-wrap break-words">{inputText}</span>
+                                                            {showInputCaret && <span className="typing-cursor at-end" aria-hidden="true" />}
+                                                        </>
+                                                    ) : (
+                                                        !isSimulatingInput && (
+                                                            <span className="text-gray-400">{inputPlaceholder}</span>
+                                                        )
+                                                    )}
+                                                </div>
                                             </div>
                                             <button type="button" disabled={!inputText.trim()}
                                                 className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${inputText.trim() ? 'bg-[#0B3D5C] text-white' : 'bg-gray-300 text-gray-500'}`}>
