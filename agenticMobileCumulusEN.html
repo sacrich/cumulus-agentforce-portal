@@ -82,6 +82,23 @@
         }
         .ios-key { background: #fff; border-radius: 5px; box-shadow: 0 1px 0 #898a8d; font-size: 17px; font-weight: 400; }
         .chat-input-mock { background: #fff; border: 1px solid #c7c7cc; border-radius: 20px; min-height: 36px; }
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: #00A3A1;
+            margin-left: 1px;
+            vertical-align: text-bottom;
+            animation: cursorBlink 0.85s step-end infinite;
+        }
+        @keyframes cursorBlink { 50% { opacity: 0; } }
+        .typing-dot { animation: typingBounce 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typingBounce {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -313,10 +330,17 @@
             const skipTypingRef = useRef(false);
             const demoLockRef = useRef(false);
             const demoTypingStartedRef = useRef(false);
+            const isSimulatingRef = useRef(false);
+            const isTypingRef = useRef(false);
+            const pendingAgentFnRef = useRef(null);
+            const typingTextRef = useRef('');
+            const typingNextStepRef = useRef(0);
+            const typingFlushRef = useRef(false);
             const chatEndRef = useRef(null);
-            const inputRef = useRef(null);
 
             useEffect(() => { demoStepRef.current = demoStep; }, [demoStep]);
+            useEffect(() => { isSimulatingRef.current = isSimulatingInput; }, [isSimulatingInput]);
+            useEffect(() => { isTypingRef.current = isTyping; }, [isTyping]);
             useEffect(() => {
                 if (phase === 'chat') chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
             }, [messages, isTyping, inputText, phase, keyboardVisible]);
@@ -337,14 +361,46 @@
             }, [phase, chatGreeted]);
 
             const queueAgent = (fn) => {
+                pendingAgentFnRef.current = fn;
                 setIsTyping(true);
                 setKeyboardVisible(false);
                 if (agentTimeoutRef.current) clearTimeout(agentTimeoutRef.current);
                 agentTimeoutRef.current = setTimeout(() => {
                     agentTimeoutRef.current = null;
+                    pendingAgentFnRef.current = null;
                     setIsTyping(false);
                     fn();
                 }, AI_REPLY_DELAY_MS);
+            };
+
+            const skipAgentReply = () => {
+                if (!isTypingRef.current || !pendingAgentFnRef.current) return;
+                if (agentTimeoutRef.current) {
+                    clearTimeout(agentTimeoutRef.current);
+                    agentTimeoutRef.current = null;
+                }
+                const fn = pendingAgentFnRef.current;
+                pendingAgentFnRef.current = null;
+                setIsTyping(false);
+                fn();
+            };
+
+            const finishTypingAndSend = (text, nextStep) => {
+                if (typingFlushRef.current) return;
+                typingFlushRef.current = true;
+                skipTypingRef.current = true;
+                if (typingTimeoutRef.current) {
+                    clearTimeout(typingTimeoutRef.current);
+                    typingTimeoutRef.current = null;
+                }
+                setInputText(text);
+                setIsSimulatingInput(false);
+                setDemoStep(nextStep);
+                demoTypingStartedRef.current = false;
+                demoLockRef.current = false;
+                sendUserMessage(text);
+                queueAgent(triggerAgent);
+                typingFlushRef.current = false;
             };
 
             const sendUserMessage = (text) => {
@@ -395,6 +451,9 @@
                 demoTypingStartedRef.current = true;
                 demoLockRef.current = true;
                 if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                typingTextRef.current = text;
+                typingNextStepRef.current = nextStep;
+                typingFlushRef.current = false;
                 setIsSimulatingInput(true);
                 setKeyboardVisible(true);
                 skipTypingRef.current = false;
@@ -402,13 +461,7 @@
                 let i = 0;
                 const typeNext = () => {
                     if (skipTypingRef.current) {
-                        setInputText(text);
-                        setIsSimulatingInput(false);
-                        setDemoStep(nextStep);
-                        sendUserMessage(text);
-                        demoTypingStartedRef.current = false;
-                        demoLockRef.current = false;
-                        queueAgent(triggerAgent);
+                        finishTypingAndSend(text, nextStep);
                         return;
                     }
                     if (i < text.length) {
@@ -448,7 +501,7 @@
             const handleDemoKey = () => {
                 if (phase === 'push') { setPhase('recap'); return; }
                 if (phase === 'recap') { setPhase('chat'); return; }
-                if (sessionComplete || isConnecting || isTyping || isSimulatingInput) return;
+                if (sessionComplete || isConnecting) return;
 
                 const s = demoStepRef.current;
                 if (DEMO_USER_LINES[s]) {
@@ -457,30 +510,34 @@
                     return;
                 }
                 if (s === 8 && !waOfferChoice) {
-                    demoLockRef.current = true;
                     handleWaOffer('Yes, send recap on WhatsApp');
-                    demoLockRef.current = false;
                 }
             };
 
             useEffect(() => {
                 const onKey = (e) => {
                     if (['Control', 'Shift', 'Meta', 'Alt', 'Tab'].includes(e.key)) return;
-                    if (isSimulatingInput) {
+
+                    if (isSimulatingRef.current) {
                         e.preventDefault();
-                        if (!demoLockRef.current) {
-                            demoLockRef.current = true;
-                            skipTypingRef.current = true;
-                        }
+                        skipTypingRef.current = true;
+                        finishTypingAndSend(typingTextRef.current, typingNextStepRef.current);
                         return;
                     }
-                    if (demoLockRef.current && phase === 'chat') return;
+
+                    if (isTypingRef.current) {
+                        e.preventDefault();
+                        skipAgentReply();
+                        return;
+                    }
+
+                    if (sessionComplete || isConnecting) return;
                     e.preventDefault();
                     handleDemoKey();
                 };
                 window.addEventListener('keydown', onKey, true);
                 return () => window.removeEventListener('keydown', onKey, true);
-            }, [phase, sessionComplete, isConnecting, isTyping, isSimulatingInput, waOfferChoice]);
+            }, [phase, sessionComplete, isConnecting, waOfferChoice]);
 
             useEffect(() => {
                 demoTypingStartedRef.current = false;
@@ -537,17 +594,30 @@
                                                 {m.role === 'user' && <span className="w-6 h-6 ml-1.5 bg-blue-600 text-white rounded-full text-[9px] font-bold flex items-center justify-center shrink-0">M</span>}
                                             </div>
                                         ))}
-                                        {isTyping && <p className="text-[10px] text-gray-400 pl-8">Agentforce is typing…</p>}
+                                        {isTyping && (
+                                            <div className="flex justify-start mb-1 pl-8 fade-in">
+                                                <img src={AGENTFORCE_ICON} alt="" className="w-6 h-6 mr-1.5 mt-1 object-contain shrink-0 opacity-80" />
+                                                <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm flex items-center gap-1.5">
+                                                    <span className="typing-dot w-2 h-2 bg-[#94a3b8] rounded-full" />
+                                                    <span className="typing-dot w-2 h-2 bg-[#94a3b8] rounded-full" />
+                                                    <span className="typing-dot w-2 h-2 bg-[#94a3b8] rounded-full" />
+                                                </div>
+                                            </div>
+                                        )}
                                         <div ref={chatEndRef} />
                                     </div>
 
                                     <div className="shrink-0 bg-[#f2f2f7] border-t border-gray-200">
                                         <div className="px-3 py-2 flex items-end gap-2">
-                                            <div className="flex-1 chat-input-mock px-3 py-2 text-[13px] text-gray-800 min-h-[36px] flex items-center">
-                                                <span ref={inputRef} className={inputText ? 'text-gray-900' : 'text-gray-400'}>
-                                                    {inputText || (isConnecting ? 'Connecting…' : sessionComplete ? 'Continued on WhatsApp' : 'Message Agentforce…')}
-                                                </span>
-                                                {isSimulatingInput && <span className="inline-block w-0.5 h-4 bg-[#00A3A1] ml-0.5 animate-pulse" />}
+                                            <div className="flex-1 chat-input-mock px-3 py-2 text-[13px] text-gray-800 min-h-[36px] leading-snug">
+                                                {inputText ? (
+                                                    <span className="text-gray-900 whitespace-pre-wrap break-words">{inputText}</span>
+                                                ) : (
+                                                    <span className="text-gray-400">
+                                                        {isConnecting ? 'Connecting…' : sessionComplete ? 'Continued on WhatsApp' : 'Message Agentforce…'}
+                                                    </span>
+                                                )}
+                                                {isSimulatingInput && <span className="typing-cursor" aria-hidden="true" />}
                                             </div>
                                             <button type="button" disabled={!inputText.trim()}
                                                 className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${inputText.trim() ? 'bg-[#0B3D5C] text-white' : 'bg-gray-300 text-gray-500'}`}>
@@ -556,7 +626,7 @@
                                         </div>
                                         {keyboardVisible && <IOSKeyboard />}
                                         {!keyboardVisible && !sessionComplete && (
-                                            <p className="text-center text-[9px] text-gray-400 pb-1">Press any key to type &amp; send</p>
+                                            <p className="text-center text-[9px] text-gray-400 pb-1">Press <strong>→</strong> or any key to type &amp; send · skip typing or agent reply</p>
                                         )}
                                         <HomeIndicator dark />
                                     </div>
