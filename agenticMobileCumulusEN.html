@@ -81,7 +81,7 @@
             flex-shrink: 0;
         }
         .ios-key { background: #fff; border-radius: 5px; box-shadow: 0 1px 0 #898a8d; font-size: 17px; font-weight: 400; }
-        .chat-input-mock { background: #fff; border: 1px solid #c7c7cc; border-radius: 20px; min-height: 36px; transition: border-color 0.15s, box-shadow 0.15s; }
+        .chat-input-mock { background: #fff; border: 1px solid #c7c7cc; border-radius: 20px; min-height: 36px; transition: border-color 0.15s, box-shadow 0.15s; position: relative; }
         .chat-input-mock.is-active {
             border-color: #00A3A1;
             box-shadow: 0 0 0 2px rgba(0, 163, 161, 0.15);
@@ -105,6 +105,22 @@
         }
         .chat-input-field::placeholder { color: #9ca3af; }
         .chat-input-field { cursor: text; }
+        .chat-input-caret {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 2px;
+            height: 17px;
+            background: #007AFF;
+            border-radius: 1px;
+            pointer-events: none;
+            animation: caretBlink 1.05s step-end infinite;
+        }
+        @keyframes caretBlink {
+            0%, 45% { opacity: 1; }
+            46%, 100% { opacity: 0; }
+        }
         .typing-dot { animation: typingBounce 1.4s infinite ease-in-out both; }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
@@ -367,6 +383,7 @@
             useEffect(() => { chatGreetedRef.current = chatGreeted; }, [chatGreeted]);
             useEffect(() => { phaseRef.current = phase; }, [phase]);
             useEffect(() => {
+                if (phase === 'chat') return;
                 stageRef.current?.focus({ preventScroll: true });
             }, [phase]);
             useEffect(() => {
@@ -582,7 +599,7 @@
                     handleDemoKey();
                 };
                 window.addEventListener('keydown', onKey, true);
-                stageRef.current?.focus({ preventScroll: true });
+                if (phaseRef.current !== 'chat') stageRef.current?.focus({ preventScroll: true });
                 return () => window.removeEventListener('keydown', onKey, true);
             }, [sessionComplete, waOfferChoice]);
 
@@ -608,7 +625,7 @@
 
             useEffect(() => {
                 if (phase !== 'chat') return;
-                const t = setTimeout(focusChatInput, 60);
+                const t = setTimeout(focusChatInput, 40);
                 return () => clearTimeout(t);
             }, [phase, sessionComplete, isConnecting, isTyping, chatGreeted, inputText, isSimulatingInput]);
 
@@ -678,6 +695,9 @@
                                     <div className="shrink-0 bg-[#f2f2f7] border-t border-gray-200">
                                         <div className="px-3 py-2 flex items-end gap-2">
                                             <div className={`flex-1 chat-input-mock px-3 py-2 flex items-center ${showInputCaret ? 'is-active' : ''}`}>
+                                                {showInputCaret && !inputText && (
+                                                    <span className="chat-input-caret" aria-hidden="true" />
+                                                )}
                                                 <textarea
                                                     ref={inputFieldRef}
                                                     value={inputText}
