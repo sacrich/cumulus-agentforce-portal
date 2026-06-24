@@ -117,9 +117,32 @@
             vertical-align: middle;
             animation: caretBlink 1.05s step-end infinite;
         }
+        .chat-input-mock.is-active .chat-input-faux:has(.chat-input-placeholder)::before {
+            content: '';
+            display: inline-block;
+            width: 3px;
+            height: 18px;
+            background: #007AFF;
+            border-radius: 1px;
+            flex-shrink: 0;
+            margin-right: 2px;
+            vertical-align: middle;
+            animation: caretBlink 1.05s step-end infinite;
+        }
+        .chat-input-mock.is-active .chat-input-value::after {
+            content: '';
+            display: inline-block;
+            width: 3px;
+            height: 18px;
+            background: #007AFF;
+            border-radius: 1px;
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: caretBlink 1.05s step-end infinite;
+        }
         @keyframes caretBlink {
-            0%, 45% { opacity: 1; }
-            46%, 100% { opacity: 0; }
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0.2; }
         }
         .typing-dot { animation: typingBounce 1.4s infinite ease-in-out both; }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
@@ -681,16 +704,10 @@
                                         <div className="px-3 py-2 flex items-end gap-2">
                                             <div className={`flex-1 chat-input-mock px-3 py-2 flex items-center ${showInputCaret ? 'is-active' : ''}`}>
                                                 <div className="chat-input-faux" aria-label="Message Agentforce">
-                                                    {showInputCaret && !inputText && (
-                                                        <span className="chat-input-caret" aria-hidden="true" />
-                                                    )}
                                                     {inputText ? (
                                                         <span className="chat-input-value">{inputText}</span>
                                                     ) : (
                                                         <span className="chat-input-placeholder">{inputPlaceholder}</span>
-                                                    )}
-                                                    {showInputCaret && inputText && (
-                                                        <span className="chat-input-caret" aria-hidden="true" />
                                                     )}
                                                 </div>
                                             </div>
