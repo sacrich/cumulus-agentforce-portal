@@ -104,7 +104,7 @@
             overflow-y: auto;
         }
         .chat-input-field::placeholder { color: #9ca3af; }
-        .chat-input-field:read-only { cursor: text; }
+        .chat-input-field { cursor: text; }
         .typing-dot { animation: typingBounce 1.4s infinite ease-in-out both; }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
@@ -680,12 +680,14 @@
                                             <div className={`flex-1 chat-input-mock px-3 py-2 flex items-center ${showInputCaret ? 'is-active' : ''}`}>
                                                 <textarea
                                                     ref={inputFieldRef}
-                                                    readOnly
                                                     value={inputText}
                                                     placeholder={inputPlaceholder}
                                                     rows={1}
                                                     className="chat-input-field"
                                                     aria-label="Message Agentforce"
+                                                    onChange={() => {}}
+                                                    onKeyDown={(e) => e.preventDefault()}
+                                                    onPaste={(e) => e.preventDefault()}
                                                     onFocus={(e) => {
                                                         const len = e.target.value.length;
                                                         try { e.target.setSelectionRange(len, len); } catch (_) { /* ignore */ }
