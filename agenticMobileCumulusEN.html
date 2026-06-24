@@ -86,18 +86,25 @@
             border-color: #00A3A1;
             box-shadow: 0 0 0 2px rgba(0, 163, 161, 0.15);
         }
-        .typing-cursor {
-            display: inline-block;
-            width: 2px;
-            height: 18px;
-            background: #007AFF;
-            margin-right: 1px;
-            flex-shrink: 0;
-            vertical-align: text-bottom;
-            animation: cursorBlink 1s step-end infinite;
+        .chat-input-field {
+            width: 100%;
+            border: 0;
+            outline: none;
+            resize: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 13px;
+            line-height: 1.35;
+            color: #111827;
+            caret-color: #007AFF;
+            padding: 0;
+            margin: 0;
+            min-height: 20px;
+            max-height: 88px;
+            overflow-y: auto;
         }
-        .typing-cursor.at-end { margin-right: 0; margin-left: 1px; }
-        @keyframes cursorBlink { 50% { opacity: 0; } }
+        .chat-input-field::placeholder { color: #9ca3af; }
+        .chat-input-field:read-only { cursor: text; }
         .typing-dot { animation: typingBounce 1.4s infinite ease-in-out both; }
         .typing-dot:nth-child(1) { animation-delay: -0.32s; }
         .typing-dot:nth-child(2) { animation-delay: -0.16s; }
@@ -346,6 +353,7 @@
             const chatGreetedRef = useRef(false);
             const phaseRef = useRef('push');
             const stageRef = useRef(null);
+            const inputFieldRef = useRef(null);
             const chatEndRef = useRef(null);
 
             const AGENT_GREETING = {
@@ -590,6 +598,20 @@
                     : 'Message Agentforce…';
             const showInputCaret = !sessionComplete && !isConnecting && !isTyping;
 
+            const focusChatInput = () => {
+                const el = inputFieldRef.current;
+                if (!el || sessionComplete || isConnecting || isTyping) return;
+                el.focus({ preventScroll: true });
+                const len = el.value.length;
+                try { el.setSelectionRange(len, len); } catch (_) { /* ignore */ }
+            };
+
+            useEffect(() => {
+                if (phase !== 'chat') return;
+                const t = setTimeout(focusChatInput, 60);
+                return () => clearTimeout(t);
+            }, [phase, sessionComplete, isConnecting, isTyping, chatGreeted, inputText, isSimulatingInput]);
+
             return (
                 <div className="phone-stage" ref={stageRef} tabIndex={0} aria-label="Cumulus mobile demo — press arrow keys to advance">
                     <div className="phone-frame">
@@ -655,22 +677,20 @@
 
                                     <div className="shrink-0 bg-[#f2f2f7] border-t border-gray-200">
                                         <div className="px-3 py-2 flex items-end gap-2">
-                                            <div className={`flex-1 chat-input-mock px-3 py-2 text-[13px] text-gray-800 min-h-[36px] leading-snug flex items-center ${showInputCaret ? 'is-active' : ''}`}>
-                                                <div className="flex flex-wrap items-baseline flex-1 min-w-0">
-                                                    {showInputCaret && !inputText && (
-                                                        <span className="typing-cursor" aria-hidden="true" />
-                                                    )}
-                                                    {inputText ? (
-                                                        <>
-                                                            <span className="text-gray-900 whitespace-pre-wrap break-words">{inputText}</span>
-                                                            {showInputCaret && <span className="typing-cursor at-end" aria-hidden="true" />}
-                                                        </>
-                                                    ) : (
-                                                        !isSimulatingInput && (
-                                                            <span className="text-gray-400">{inputPlaceholder}</span>
-                                                        )
-                                                    )}
-                                                </div>
+                                            <div className={`flex-1 chat-input-mock px-3 py-2 flex items-center ${showInputCaret ? 'is-active' : ''}`}>
+                                                <textarea
+                                                    ref={inputFieldRef}
+                                                    readOnly
+                                                    value={inputText}
+                                                    placeholder={inputPlaceholder}
+                                                    rows={1}
+                                                    className="chat-input-field"
+                                                    aria-label="Message Agentforce"
+                                                    onFocus={(e) => {
+                                                        const len = e.target.value.length;
+                                                        try { e.target.setSelectionRange(len, len); } catch (_) { /* ignore */ }
+                                                    }}
+                                                />
                                             </div>
                                             <button type="button" disabled={!inputText.trim()}
                                                 className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${inputText.trim() ? 'bg-[#0B3D5C] text-white' : 'bg-gray-300 text-gray-500'}`}>
